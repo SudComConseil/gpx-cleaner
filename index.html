@@ -33,8 +33,12 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 #mapCount{position:absolute;z-index:510;bottom:12px;left:12px;background:#fffe;padding:5px 9px;border-radius:7px;font-size:11px;color:#405b65;pointer-events:none}#mobileDock,#mobileScrim{display:none}
 @media(max-width:760px){html,body{height:100%;overflow:hidden}header{height:54px;padding:10px 13px}header b{font-size:17px}header>small{display:none}main{display:block;height:calc(100dvh - 54px)}#map{height:100%;min-height:0}aside{position:fixed;z-index:1200;left:0;right:0;bottom:0;max-height:80dvh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 25px #0003;transform:translateY(110%);transition:transform .2s;padding:12px 18px 90px}body.toolsOpen aside{transform:translateY(0)}#mobileScrim{position:fixed;inset:54px 0 0;background:#0006;z-index:1100}body.toolsOpen #mobileScrim{display:block}#mobileDock{display:flex;position:fixed;z-index:1050;bottom:0;left:0;right:0;gap:7px;padding:9px 10px max(9px,env(safe-area-inset-bottom));background:#fff;box-shadow:0 -2px 14px #0002}#mobileDock>*{flex:1;font-size:13px;padding:12px 6px}#maptip{top:9px;right:9px;max-width:195px;padding:6px;font-size:11px}#mapCount{bottom:77px;left:8px}#reviewPanel{top:auto;bottom:75px;padding:10px;width:calc(100% - 16px)}#reviewPanel button{padding:10px 7px;font-size:12px}#candidates{max-height:none}}
 
-/* 1.0.9 — Interface tactile compacte */
+/* 1.0.10 — Corrections mobile et visibilité des arrêts */
 #mobileSheetHead{display:none}
+#stopListDetails>summary{padding:9px 0;color:#375f6c;font-size:13px}#stopListDetails[open]>summary{margin-bottom:7px}
+#mapOptions,#mapOptions select,#mapOptions .mapOptionsBody{touch-action:manipulation}
+#mapOptions .mapOptionsBody{overscroll-behavior:contain}
+.stopitem.is-hidden{opacity:.62}.stopitem .stop-visibility{white-space:nowrap}
 #maptip{padding:0;max-width:min(280px,calc(100vw - 75px));overflow:visible;border-radius:12px}
 #mapOptions>summary{list-style:none;display:flex;align-items:center;gap:7px;cursor:pointer;padding:10px 12px;font-weight:700;min-width:150px;user-select:none;white-space:nowrap}
 #mapOptions>summary::-webkit-details-marker{display:none}
@@ -67,7 +71,11 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
  aside .step.mobileExpanded{padding-bottom:14px}
  aside .step.mobileExpanded .row{display:flex!important}
  aside .step.mobileExpanded .stats{display:flex!important}
- aside .step.mobileExpanded #candidates,aside .step.mobileExpanded #stopList{display:block!important;max-height:30dvh;overflow:auto}
+ aside .step.mobileExpanded #candidates,aside .step.mobileExpanded #stopListDetails[open] #stopList{display:block!important;max-height:30dvh;overflow:auto}
+ aside .step.mobileExpanded #stopListDetails:not([open]) #stopList{display:none!important}
+ aside .step.mobileExpanded #stopListDetails{display:block!important}
+ aside .step.mobileExpanded #stopListDetails>summary{display:list-item!important}
+ aside .step.mobileExpanded #stopListDetails[open]>summary{display:list-item!important}
  aside .step.mobileExpanded #reviewAll{display:block!important}
  aside .step.mobileExpanded #reviewAll[style*="display: none"]{display:none!important}
  aside .step.mobileExpanded label.upload{display:block!important}
@@ -80,7 +88,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
  #reviewPanel{bottom:75px;max-height:55dvh;overflow:auto;border-radius:14px}
  #reviewPanel .reviewText{font-size:12px}
  #reviewPanel .reviewActions button{font-size:12px}
- body.toolsOpen #mapOptions{pointer-events:none}
+ body.toolsOpen #mapOptions{pointer-events:auto}
 }
 @media(min-width:761px){#maptip{min-width:170px}}
 </style></head>
@@ -99,7 +107,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 <button id="reviewAll" class="secondary" style="width:100%;display:none">▶ Tout réviser</button><div id="candidates"></div>
 <div class="row"><button id="undo" class="secondary" disabled>↶ Annuler</button><button id="reset" class="secondary" disabled>Tout rétablir</button></div>
 </section>
-<section class="step"><h2>3. Arrêts et nuits</h2><p class="muted">Détection automatique si le GPX contient des horaires. Une nuit est estimée et peut être corrigée.</p><div class="row"><button id="stopsRefresh" class="secondary">↻ Recalculer</button><label class="muted" style="align-self:center"><input type="checkbox" id="showStops" checked> Afficher sur carte</label></div><p class="muted" id="stopsStatus">Aucune trace chargée.</p><div id="stopList"></div></section><section class="step"><h2>4. Exporter</h2><p class="muted" id="cleanStats">Aucun détour supprimé.</p><button id="compare" class="secondary" style="width:100%;margin-bottom:10px" disabled>Afficher : trace nettoyée</button><p class="muted" id="saveStatus">Sauvegarde locale disponible.</p>
+<section class="step"><h2>3. Arrêts et nuits</h2><p class="muted">Détection automatique si le GPX contient des horaires. Une nuit est estimée et peut être corrigée.</p><div class="row"><button id="stopsRefresh" class="secondary">↻ Recalculer</button><label class="muted" style="align-self:center"><input type="checkbox" id="showStops" checked> Afficher sur carte</label></div><p class="muted" id="stopsStatus">Aucune trace chargée.</p><details id="stopListDetails"><summary id="stopListSummary">Détail des arrêts</summary><div id="stopList"></div></details></section><section class="step"><h2>4. Exporter</h2><p class="muted" id="cleanStats">Aucun détour supprimé.</p><button id="compare" class="secondary" style="width:100%;margin-bottom:10px" disabled>Afficher : trace nettoyée</button><p class="muted" id="saveStatus">Sauvegarde locale disponible.</p>
 <p class="muted">Vérifie les détours écartés sur la carte avant d'exporter. Les portions supprimées sont raccordées directement : cela ne garantit pas l'existence d'un chemin praticable.</p>
 <label class="muted" for="exportName">Nom du fichier exporté</label><input id="exportName" type="text" value="GPX_Cleaner_nettoye.gpx" spellcheck="false" aria-label="Nom du GPX exporté" style="width:100%;padding:11px;border:1px solid #cbdadd;border-radius:8px;margin:6px 0 12px;font:inherit"/><button id="export" style="width:100%" disabled>⬇ Télécharger le GPX nettoyé</button>
 </section>
@@ -372,14 +380,17 @@ function stopsForProposal(p){return stops.filter(st=>st.ti===p.ti&&st.start<=p.e
 function confirmStopRemoval(p){const visits=stopsForProposal(p);return !visits.length||confirm('⚠ Ce détour contient '+visits.map(st=>stopType(st).label+' de '+durationText(st.mins)).join(', ')+'.\nÉcarter quand même le détour ?')}
 function renderStops(){
  $('stopsStatus').textContent=stops.length?`${stops.length} arrêt(s) détecté(s) (au moins 10 min).`:'Aucun arrêt détecté. Des horaires GPS sont nécessaires.';
- $('stopList').innerHTML=stops.map((st,i)=>`<div class="stopitem"><span class="stop-meta"><b>${esc(stopType(st).label)}</b> · ${durationText(st.mins)} · ${esc(tracks[st.ti]?.name||'')}</span><select aria-label="Type d'arrêt" data-stoptype="${i}">${typeOptions(st)}</select><button class="secondary" data-stopzoom="${i}">Voir</button></div>`).join('');
+ $('stopListSummary').textContent=`Détail des arrêts (${stops.length})`;
+ $('stopList').innerHTML=stops.map((st,i)=>`<div class="stopitem ${st.hidden?'is-hidden':''}"><span class="stop-meta"><b>${esc(stopType(st).label)}</b> · ${durationText(st.mins)} · ${esc(tracks[st.ti]?.name||'')}</span><select aria-label="Type d'arrêt" data-stoptype="${i}">${typeOptions(st)}</select><button class="secondary" data-stopzoom="${i}">Voir</button><button class="secondary stop-visibility" data-stophide="${i}" aria-label="${st.hidden?'Réafficher':'Masquer'} cet arrêt">${st.hidden?'Afficher':'Masquer'}</button></div>`).join('');
  $('stopList').querySelectorAll('[data-stopzoom]').forEach(el=>el.onclick=()=>{const st=stops[+el.dataset.stopzoom];map.setView([st.lat,st.lon],16);document.body.classList.remove('toolsOpen')});
+ $('stopList').querySelectorAll('[data-stophide]').forEach(el=>el.onclick=()=>setStopHidden(+el.dataset.stophide,!stops[+el.dataset.stophide].hidden));
  $('stopList').querySelectorAll('[data-stoptype]').forEach(el=>el.onchange=()=>setStopType(+el.dataset.stoptype,el.value));
 }
 function setStopType(i,type){if(!stops[i]||!STOP_TYPES[type])return;stops[i].type=type;stops[i].kind=STOP_TYPES[type].night?'night':'pause';renderStops();drawStops();scheduleSave()}
+function setStopHidden(i,hidden){if(!stops[i])return;stops[i].hidden=!!hidden;renderStops();drawStops();scheduleSave()}
 function setStopKind(i){if(!stops[i])return;setStopType(i,stops[i].kind==='night'?'other':'bivouac')}
 function drawStops(){stopLayer.clearLayers();if(!$('showStops').checked)return;const selected=$('day').value;
- stops.forEach((st,i)=>{if(selected!=='all'&&+selected!==st.ti)return;const type=stopType(st);L.marker([st.lat,st.lon],{icon:L.divIcon({className:'',html:pinSVG(st),iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-34]})}).addTo(stopLayer).bindPopup(`<b>${esc(type.label)}</b><br>Durée : ${durationText(st.mins)}<br><label>Catégorie <select id="popupStopType" aria-label="Catégorie de l'arrêt">${typeOptions(st)}</select></label>`).on('popupopen',()=>{const sel=document.getElementById('popupStopType');if(sel)sel.onchange=()=>{setStopType(i,sel.value);map.closePopup()}})});
+ stops.forEach((st,i)=>{if(st.hidden)return;if(selected!=='all'&&+selected!==st.ti)return;const type=stopType(st);L.marker([st.lat,st.lon],{icon:L.divIcon({className:'',html:pinSVG(st),iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-34]})}).addTo(stopLayer).bindPopup(`<b>${esc(type.label)}</b><br>Durée : ${durationText(st.mins)}<br><label>Catégorie <select id="popupStopType" aria-label="Catégorie de l'arrêt">${typeOptions(st)}</select></label><br><button id="popupHideStop" type="button" style="margin-top:8px">Masquer cet arrêt</button>`).on('popupopen',()=>{const sel=document.getElementById('popupStopType');if(sel)sel.onchange=()=>{setStopType(i,sel.value);map.closePopup()};const hide=document.getElementById('popupHideStop');if(hide)hide.onclick=()=>{setStopHidden(i,true);map.closePopup()}})});
 }
 $('stopsRefresh').onclick=()=>{detectStops();draw();scheduleSave()};$('showStops').onchange=drawStops;
 $('compare').onclick=()=>{comparison=!comparison;draw();scheduleSave()};
@@ -424,9 +435,16 @@ draw();restoreSession();
  const name=$('currentMapName');
  const sel=$('basemap');
  const update=()=>{name.textContent=names[sel.value]||'Fond de carte';};
- sel.addEventListener('change',()=>{update();if(mobile())$('mapOptions').open=false;});
+ sel.addEventListener('change',()=>{update();$('mapOptions').open=false;});
+ // Empêche les interactions du sélecteur natif de remonter à la carte et de replier la boîte.
+ const options=$('mapOptions');
+ L.DomEvent.disableClickPropagation(options);
+ L.DomEvent.disableScrollPropagation(options);
+ ['pointerdown','touchstart','mousedown','click'].forEach(event=>options.addEventListener(event,e=>e.stopPropagation()));
  update();
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){close();$('mapOptions').open=false;}});
  map.on('click',()=>{if(mobile())$('mapOptions').open=false;});
+ $('stopListDetails').open=!mobile();
+ window.addEventListener('resize',()=>{if(!mobile())$('stopListDetails').open=true;});
 })();
 </script></body></html>
