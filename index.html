@@ -1,141 +1,30 @@
-<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GPX Cleaner — Nettoyer une trace en 2 minutes</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<style>
-:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#17313b;background:#f4f7f8}
-*{box-sizing:border-box}body{margin:0}header{padding:16px 24px;background:#123642;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:15px}header b{font-size:22px}header small{color:#c1d5da}
-main{display:grid;grid-template-columns:minmax(290px,355px) 1fr;height:calc(100vh - 66px)}aside{background:white;overflow-y:auto;padding:20px;border-right:1px solid #dce5e9}
-h2{font-size:17px;margin:0 0 12px}p{line-height:1.5}.muted{color:#60747c;font-size:13px}.step{padding:17px 0;border-bottom:1px solid #e5ebed}.step:last-child{border:0}
-button,.upload{font:inherit;font-weight:650;background:#087e81;color:#fff;border:0;border-radius:9px;padding:12px 14px;cursor:pointer;display:inline-block;text-align:center}
-button:hover,.upload:hover{filter:brightness(.95)}button:disabled{opacity:.45;cursor:not-allowed}
-.secondary{background:#e8f1f2;color:#16404b}.upload{width:100%}input[type=file]{display:none}
-.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}select{padding:10px;border:1px solid #cbdadd;border-radius:8px;width:100%;background:white}
-#map{position:relative;height:100%;background:#e6eff1;background-image:linear-gradient(#d2e0e4 1px,transparent 1px),linear-gradient(90deg,#d2e0e4 1px,transparent 1px);background-size:40px 40px}
-#candidates{max-height:32vh;overflow:auto;margin-top:8px}.candidate{border:1px solid #dce6e9;border-radius:9px;padding:10px;margin:8px 0}.candidate.active{border-color:#16a078;background:#effbf6}.candidate .row{margin-top:8px}.candidate button{font-size:12px;padding:8px}
-#status,#progress{margin:8px 0}.stats{display:flex;justify-content:space-between;gap:10px;margin:12px 0}.stats div{background:#f1f6f7;border-radius:8px;padding:10px;flex:1}.stats b{display:block;font-size:20px}
-#maptip{position:absolute;z-index:500;right:14px;top:14px;background:#fff;padding:10px 12px;border-radius:8px;box-shadow:0 2px 8px #0002;font-size:12px;max-width:240px}#maptip select{font-size:12px;padding:5px;margin-top:5px}#maptip label{display:flex;align-items:center;gap:5px;margin-top:8px}#maptip input{accent-color:#087e81}#tileStatus{display:block;margin-top:5px;color:#60747c}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:12px 0}.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px}
-details summary{cursor:pointer;font-weight:650;padding:6px 0}
-@media(max-width:760px){main{display:flex;flex-direction:column;height:auto}aside{overflow:visible}#map{height:65vh;min-height:380px}}
-#reviewPanel{position:absolute;z-index:1000;left:50%;top:15px;transform:translateX(-50%);width:min(440px,calc(100% - 30px));background:#fff;border-radius:14px;box-shadow:0 8px 30px #0005;padding:15px;display:none}
-#reviewPanel .reviewHead{display:flex;justify-content:space-between;gap:12px;align-items:center}
-#reviewPanel .reviewHead button{flex:0 0 auto;padding:5px 10px}
-#reviewPanel .reviewActions{display:flex;gap:7px;margin-top:12px}
-#reviewPanel .reviewActions button{flex:1}
-#reviewPanel .reviewActions button:disabled{opacity:.35}
-#reviewPanel .reviewText{margin:8px 0;font-size:14px}
-#reviewPanel .reviewProgress{height:5px;background:#e6eff0;border-radius:5px;overflow:hidden;margin-top:10px}
-#reviewPanel .reviewProgress div{height:100%;background:#087e81;transition:width .15s}
-</style></head>
-<body><header><b>✂ GPX Cleaner <small>1.0.4</small></b><small>Importer · Nettoyer · Exporter</small></header>
-<main><aside>
-<section class="step"><h2>1. Importer une trace</h2>
-<label class="upload">📁 Choisir un GPX ou un export OsmAnd (.OSF)<input id="file" type="file" accept=".gpx,.osf" multiple></label>
-<p id="status" class="muted">Les fichiers sont traités dans ton navigateur. Rien n'est envoyé sur Internet.</p>
-<div class="stats"><div><span class="muted">Traces</span><b id="count">0</b></div><div><span class="muted">Distance</span><b id="distance">0 km</b></div></div>
-<label class="muted" for="day">Afficher sur la carte</label><select id="day"><option value="all">Toutes les traces</option></select>
-<details><summary>Couleurs des traces</summary><div id="legend" class="legend"></div></details>
-</section>
-<section class="step"><h2>2. Nettoyer les allers-retours</h2>
-<button id="detect" style="width:100%" disabled>🔎 Détecter les détours</button>
-<p id="progress" class="muted">Les suppressions sont proposées, jamais automatiques.</p>
-<button id="reviewAll" class="secondary" style="width:100%;display:none">▶ Tout réviser</button><div id="candidates"></div>
-<div class="row"><button id="undo" class="secondary" disabled>↶ Annuler</button><button id="reset" class="secondary" disabled>Tout rétablir</button></div>
-</section>
-<section class="step"><h2>3. Exporter</h2>
-<p class="muted">Vérifie les détours écartés sur la carte avant d'exporter. Les portions supprimées sont raccordées directement : cela ne garantit pas l'existence d'un chemin praticable.</p>
-<label class="muted" for="exportName">Nom du fichier exporté</label><input id="exportName" type="text" value="GPX_Cleaner_nettoye.gpx" spellcheck="false" aria-label="Nom du GPX exporté" style="width:100%;padding:11px;border:1px solid #cbdadd;border-radius:8px;margin:6px 0 12px;font:inherit"/><button id="export" style="width:100%" disabled>⬇ Télécharger le GPX nettoyé</button>
-</section>
-</aside><div id="map"><div id="reviewPanel">
-<div class="reviewHead"><b id="reviewTitle">Révision des détours</b><button class="secondary" id="reviewClose">✕</button></div>
-<div class="reviewText" id="reviewInfo"></div>
-<div class="reviewProgress"><div id="reviewBar"></div></div>
-<div class="reviewActions"><button id="reviewPrev" class="secondary">← Précédent</button><button id="reviewKeep" class="secondary">✓ Laisser</button><button id="reviewExclude">✂ Écarter</button></div>
-<div class="row" style="margin-top:8px"><button id="reviewNext" class="secondary">Suivant →</button><button id="reviewFinish" class="secondary">Terminer</button></div>
-</div><div id="maptip"><b>Fond de carte</b><select id="basemap"><option value="plan">Plan (OpenFreeMap)</option><option value="esri">Satellite (Esri)</option></select><label id="labelsRow" style="display:none"><input id="labelsToggle" type="checkbox" checked> Noms et routes</label><span id="tileStatus">Chargement…</span></div></div></main>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>if(!window.L)document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');</script>
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.0/leaflet-maplibre-gl.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script>if(!window.JSZip)document.write('<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"><\/script>');</script>
-<script>
-const $=id=>document.getElementById(id),rad=Math.PI/180;
-const colors=['#0072B2','#E69F00','#009E73','#CC79A7','#D55E00','#56B4E9','#7B2CBF','#8B8000','#111111','#F05D8D'];
-if(!window.L){document.getElementById('tileStatus').textContent='Carte indisponible : bibliothèques bloquées. Vérifie Internet ou autorise unpkg.com / cdnjs.cloudflare.com.';throw Error('Leaflet non chargé')}
-const map=L.map('map').setView([32.3,-4.7],6), layer=L.layerGroup().addTo(map);
-const SAT='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-const LABELS='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
-let baseLayer=null,labelLayer=null,baseChoice='plan',tileErrors=0,tileLoaded=false;
-function clearMapBase(){if(baseLayer){map.removeLayer(baseLayer);baseLayer=null}if(labelLayer){map.removeLayer(labelLayer);labelLayer=null}}
-function setLabels(){
- if(labelLayer){map.removeLayer(labelLayer);labelLayer=null}
- if(baseChoice==='esri'&&$('labelsToggle').checked){
-  labelLayer=L.tileLayer(LABELS,{maxZoom:22,maxNativeZoom:19,opacity:1,attribution:'Labels © Esri'}).addTo(map);
-  labelLayer.on('tileerror',()=>{$('tileStatus').textContent='Satellite chargé · certaines étiquettes indisponibles à ce zoom'});
- }
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TraceClaire — Nettoyeur GPX</title><meta name="theme-color" content="#152b37"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>body{margin:0;font:14px system-ui;background:#f3f5f7;color:#192b38}header{padding:15px 22px;background:#152b37;color:white;display:flex;align-items:center;justify-content:space-between}header b{font-size:21px}main{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 65px)}aside{overflow:auto;padding:18px;background:white;box-shadow:2px 0 12px #0001}#map{height:100%;min-height:500px;background-color:#eaf2f3;background-image:linear-gradient(#cfdddf 1px,transparent 1px),linear-gradient(90deg,#cfdddf 1px,transparent 1px);background-size:45px 45px}.card{border:1px solid #e2e7eb;border-radius:12px;padding:14px;margin:12px 0}.muted{color:#61727c;font-size:12px}button,.upload{border:0;border-radius:8px;background:#126d74;color:white;padding:10px 13px;cursor:pointer;font-weight:650;display:inline-block}button.secondary{background:#e9eff1;color:#19333c}button:disabled{opacity:.45;cursor:default}input[type=file]{display:none}select{width:100%;padding:9px;border:1px solid #ccd4d9;border-radius:8px;margin:7px 0}h3{margin:8px 0}#candidates{max-height:34vh;overflow:auto}.candidate{padding:10px;border-bottom:1px solid #e5e8eb}.candidate button{padding:5px 8px;font-size:12px;margin-top:6px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{background:#f1f6f6;padding:10px;border-radius:9px}.stat strong{display:block;font-size:19px}small{line-height:1.4}.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin:10px 0}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}.row{display:flex;gap:7px;flex-wrap:wrap}#status{margin-top:8px}@media(max-width:760px){main{display:flex;flex-direction:column;height:auto}aside{max-height:none}#map{height:65vh}} .poi-item{padding:8px;border-bottom:1px solid #e2e7eb}.poi-item small{display:block;color:#61727c}.pill{background:#e8f2f2;border-radius:5px;padding:3px 6px;font-size:11px}.mapcontrol{background:white;padding:8px;border-radius:7px;box-shadow:0 1px 5px #888} .mapcontrol label{display:block;font-size:12px} 
+@media(max-width:760px){
+ html,body{height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none}
+ header{height:48px;box-sizing:border-box;padding:8px 14px;position:absolute;z-index:1100;top:0;left:0;right:0}
+ header b{font-size:17px}header>span{display:none}
+ main{display:block;position:absolute;inset:48px 0 0;height:auto}
+ #map{position:absolute;inset:0;width:100%;height:100%;min-height:0;z-index:1}
+ aside{position:fixed;z-index:1200;left:0;right:0;bottom:0;top:auto;height:min(76dvh,650px);max-height:none;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;border-radius:20px 20px 0 0;padding:25px 16px calc(88px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px #0003;transform:translateY(110%);transition:transform .22s ease;visibility:hidden}
+ body.sheet-open aside{transform:translateY(0);visibility:visible}
+ body.sheet-open #mobile-scrim{display:block}
+ #mobile-scrim{display:none;position:fixed;inset:48px 0 0;background:#0005;z-index:1150}
+ #mobile-handle{display:block;position:sticky;top:-25px;margin:-25px -16px 15px;padding:12px;background:white;text-align:center;z-index:3;border-radius:20px 20px 0 0;touch-action:pan-y}
+ #mobile-handle:before{content:'';display:block;width:40px;height:5px;background:#a9b7bc;border-radius:5px;margin:auto}
+ #mobile-dock{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:1250;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#fff;box-shadow:0 -3px 20px #0002}
+ #mobile-dock button,#mobile-dock label{flex:1;text-align:center;font-size:13px;padding:12px 6px;min-width:0;box-sizing:border-box}
+ #mobile-dock .upload{margin:0}
+ .leaflet-top{top:8px}.leaflet-bottom{bottom:78px}
+ #candidates{max-height:none}
 }
-function useBase(key){
- baseChoice=key;tileErrors=0;tileLoaded=false;clearMapBase();
- $('basemap').value=key;$('labelsRow').style.display=key==='esri'?'flex':'none';
- $('tileStatus').textContent='Chargement de la carte…';
- if(key==='plan'){
-  if(typeof L.maplibreGL!=='function'){
-   $('tileStatus').textContent='Plan indisponible (bibliothèque MapLibre bloquée). Passage au satellite.';
-   useBase('esri');return;
-  }
-  try{
-   baseLayer=L.maplibreGL({style:'https://tiles.openfreemap.org/styles/liberty',interactive:false,attribution:'© OpenFreeMap · © OpenStreetMap contributors'}).addTo(map);
-   const gl=baseLayer.getMaplibreMap?.();
-   if(gl){gl.on('load',()=>{$('tileStatus').textContent='Plan chargé ✓'});gl.on('error',()=>{tileErrors++;if(tileErrors>=3&&baseChoice==='plan'){$('tileStatus').textContent='Plan inaccessible. Passage au satellite.';useBase('esri')}})}
-  }catch(e){useBase('esri')}
- }else{
-  baseLayer=L.tileLayer(SAT,{maxZoom:22,maxNativeZoom:17,attribution:'Imagerie © Esri'});
-  baseLayer.on('tileload',()=>{tileLoaded=true;$('tileStatus').textContent='Satellite chargé ✓'});
-  baseLayer.on('tileerror',()=>{tileErrors++;if(tileErrors>=4&&!tileLoaded)$('tileStatus').textContent='Imagerie indisponible ici. Essaie un zoom moins fort.'});
-  baseLayer.addTo(map);setLabels();
- }
-}
-$('basemap').onchange=e=>useBase(e.target.value);
-$('labelsToggle').onchange=setLabels;
-useBase('plan');
-let tracks=[],proposals=[],totalDistance=0,fitNext=true,busy=false,history=[],reviewIndex=-1,reviewHighlight=null;
-const meters=(a,b)=>{const dlat=(b.lat-a.lat)*rad,dlon=(b.lon-a.lon)*rad,x=Math.sin(dlat/2)**2+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dlon/2)**2;return 12742000*Math.asin(Math.min(1,Math.sqrt(x)))};
-function length(p){let s=0;for(let i=1;i<p.length;i++)if(meters(p[i-1],p[i])<2000)s+=meters(p[i-1],p[i]);return s}
-const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
-function parseGPX(txt,name){
- const xml=new DOMParser().parseFromString(txt,'application/xml');if(xml.querySelector('parsererror'))throw Error('GPX invalide : '+name);
- const points=tag=>[...xml.getElementsByTagName(tag)].map(e=>({lat:Number(e.getAttribute('lat')),lon:Number(e.getAttribute('lon')),ele:e.getElementsByTagName('ele')[0]?.textContent,time:e.getElementsByTagName('time')[0]?.textContent})).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180);
- let pts=points('trkpt');if(pts.length<2)pts=points('rtept');
- return {name,pts};
-}
-async function loadFiles(files){
- if(!files.length)return;
- try{
-  const incoming=[];
-  $('status').textContent='Lecture des traces…';
-  for(const f of files){
-   if(f.name.toLowerCase().endsWith('.osf')){
-    if(!window.JSZip)throw Error('Bibliothèque ZIP indisponible : vérifie ta connexion Internet.');
-    const z=await JSZip.loadAsync(f);
-    for(const name of Object.keys(z.files).filter(n=>n.toLowerCase().endsWith('.gpx')).sort())incoming.push(parseGPX(await z.files[name].async('string'),name.split('/').pop()));
-   }else if(f.name.toLowerCase().endsWith('.gpx'))incoming.push(parseGPX(await f.text(),f.name));
-  }
-  const original=files.length===1?files[0].name:files[0].name.replace(/\.[^.]+$/,'')+'_et_'+(files.length-1)+'_autres';
-  const cleanBase=original.replace(/\.(gpx|osf)$/i,'').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').trim()||'Trace';
-  $('exportName').value=cleanBase+'_nettoye.gpx';
-  tracks=incoming.filter(t=>t.pts.length>1);proposals=[];history=[];closeReview();fitNext=true;
-  totalDistance=tracks.reduce((sum,t)=>sum+length(t.pts),0);
-  $('day').innerHTML='<option value="all">Toutes les traces</option>'+tracks.map((t,i)=>`<option value="${i}">${esc(t.name)} (${(length(t.pts)/1000).toFixed(1)} km)</option>`).join('');
-  $('status').textContent=tracks.length?`${tracks.length} trace(s) chargée(s). Prêt pour le nettoyage.`:'Aucune trace exploitable trouvée.';
-  $('progress').textContent='Les suppressions sont proposées, jamais automatiques.';
-  draw();
- }catch(e){$('status').textContent='Erreur : '+e.message}
-}
-$('file').onchange=e=>loadFiles(e.target.files);
-$('day').onchange=()=>{fitNext=true;draw()};
+@media(min-width:761px){#mobile-dock,#mobile-scrim,#mobile-handle{display:none}}
+</style></head><body><header><b>TraceClaire <span style="font-size:12px;font-weight:400;color:#b5d8da">mobile · v0.9</span></b><span>Nettoyage de traces 4×4</span></header><div id="mobile-scrim"></div><nav id="mobile-dock" aria-label="Actions rapides"><label class="upload" for="file">＋ Importer</label><button type="button" id="mobile-tools" class="secondary" aria-expanded="false">☰ Outils</button><button type="button" id="mobile-export">↓ Exporter</button></nav><main><aside><div id="mobile-handle" aria-label="Fermer les outils"></div><h3>1. Charger un voyage</h3><label class="upload">Importer .OSF ou .GPX<input id="file" type="file" accept=".osf,.gpx" multiple></label><div class="muted" id="status">Les fichiers restent dans ton navigateur. Serveur local actif. Les traces restent dans ton navigateur. Connexion requise pour POI et satellite.</div><div class="card"><h3>2. Explorer</h3><label>Journée affichée</label><select id="day"><option value="all">Tout le voyage</option></select><div class="stats"><div class="stat"><span class="muted">Traces</span><strong id="count">0</strong></div><div class="stat"><span class="muted">Distance brute</span><strong id="distance">0 km</strong></div><div class="stat"><span class="muted">Détours proposés</span><strong id="found">0</strong></div><div class="stat"><span class="muted">Distance écartée</span><strong id="removed">0 km</strong></div></div><div class="legend" id="daylegend"><span><i class="dot" style="background:#2368bf"></i>Original</span><span><i class="dot" style="background:#df7b25"></i>À examiner</span><span><i class="dot" style="background:#16946d"></i>Nettoyé</span></div><div class="row"><button id="detect">Détecter les allers-retours</button><div class="muted" id="progress" aria-live="polite"></div><button class="secondary" id="reset">Tout rétablir</button><button class="secondary" id="undo" disabled>↶ Annuler</button><button class="secondary" id="compare" aria-pressed="false">Afficher : nettoyé</button><span class="muted" id="save-status" aria-live="polite">Sauvegarde locale activée</span></div></div><div class="card"><h3>3. Vérifier les propositions</h3><div class="muted">Une proposition correspond à un départ puis retour près du même point. Le calcul est volontairement prudent : valide chaque suppression.</div><div id="candidates">Charge une trace pour commencer.</div></div><div class="card"><h3>4. Arrêts et points d’intérêt</h3><p class="muted">Détecter les arrêts d’au moins 10 min (si les heures GPS sont enregistrées). Les POI publics sont chargés uniquement sur demande.</p><div class="row"><button id="stops">Actualiser les arrêts</button><button id="fetchpoi" class="secondary">Chercher les POI proches</button><button id="cancelpoi" class="secondary" disabled>Annuler</button></div><div id="poistatus" class="muted"></div><label>Rayon de recherche</label><select id="poiradius"><option value="500">500 m</option><option value="1000" selected>1 km</option><option value="2000">2 km</option></select><p class="muted">Pour commencer, sélectionne une seule journée dans « Explorer ». Une recherche sur tout le voyage est possible mais plus longue.</p><label>Filtrer les POI</label><select id="poifilter"><option value="all">Toutes les catégories</option><option value="tourism">Tourisme et patrimoine</option><option value="nature">Nature</option><option value="food">Restaurants et cafés</option><option value="practical">Services et hébergement</option><option value="personal">Mes POI</option></select><div id="poilist" style="max-height:270px;overflow:auto"></div><p class="muted">Clique sur la carte pour ajouter un point personnel (activer ci-dessous).</p><label><input type="checkbox" id="addmode"> Ajouter un POI en cliquant sur la carte</label></div><div class="card"><h3>5. Photos géolocalisées</h3><label class="upload">Importer des photos JPG<input id="photos" type="file" accept="image/jpeg" multiple></label><p class="muted" id="photostatus">Les photos restent sur ton ordinateur. La position EXIF est utilisée lorsqu’elle existe.</p></div><div class="row"><button id="export">Exporter GPX nettoyé</button></div><p class="muted">Attention : supprimer une impasse raccorde directement les points d'entrée et de sortie. Cela ne crée pas une nouvelle piste et ne garantit pas la praticabilité de l'itinéraire. Vérifier sur carte avant navigation.</p></aside><div id="map"><div id="mapnotice" style="position:absolute;top:12px;right:12px;z-index:900;background:white;padding:6px 10px;border-radius:6px;font-size:12px;pointer-events:none"></div></div></main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script>
+const map=L.map('map',{zoomControl:true}).setView([32.3,-4.7],6);
+// No tile requests: works even if public map providers return HTTP 403.
+document.getElementById('mapnotice').textContent='Mode sans fond de carte · traces GPS visibles';
+const colors=["#2368bf","#c44b37","#16866a","#8b55b5","#c17c14","#0086aa","#bf4087","#5a7830","#555eac","#aa5937"];const photoLayer=L.layerGroup().addTo(map);const layer=L.layerGroup().addTo(map);const poiLayer=L.layerGroup().addTo(map);let stops=[],pois=[],chosen=new Set(),poiMarkers=[];let fitNext=true;let tracks=[],proposals=[],totalDistance=0;let comparison=false,history=[],restoring=false,saveTimer=null;const $=id=>document.getElementById(id);const rad=Math.PI/180;function meters(a,b){let dlat=(b.lat-a.lat)*rad,dlon=(b.lon-a.lon)*rad,x=Math.sin(dlat/2)**2+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dlon/2)**2;return 12742000*Math.asin(Math.min(1,Math.sqrt(x)))}function length(p){let s=0;for(let i=1;i<p.length;i++)if(meters(p[i-1],p[i])<2000)s+=meters(p[i-1],p[i]);return s}function parseGPX(txt,name){let xml=new DOMParser().parseFromString(txt,'application/xml');if(xml.querySelector('parsererror'))throw Error('GPX invalide');let pts=[...xml.getElementsByTagName('trkpt')].map(e=>({lat:+e.getAttribute('lat'),lon:+e.getAttribute('lon'),ele:e.getElementsByTagName('ele')[0]?.textContent,time:e.getElementsByTagName('time')[0]?.textContent})).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon));if(pts.length<2){pts=[...xml.getElementsByTagName('rtept')].map(e=>({lat:+e.getAttribute('lat'),lon:+e.getAttribute('lon')}))}return {name,pts};}async function loadFiles(files){let incoming=[];try{for(let f of files){if(f.name.toLowerCase().endsWith('.osf')){let z=await JSZip.loadAsync(f);for(let name of Object.keys(z.files).filter(n=>n.toLowerCase().endsWith('.gpx')).sort()){incoming.push(parseGPX(await z.files[name].async('string'),name.split('/').pop()))}}else if(f.name.toLowerCase().endsWith('.gpx'))incoming.push(parseGPX(await f.text(),f.name));}tracks=incoming.filter(t=>t.pts.length>1);proposals=[];stops=[];pois=[];chosen.clear();poiLayer.clearLayers();$('poilist').innerHTML='';fitNext=true;totalDistance=tracks.reduce((sum,t)=>sum+length(t.pts),0);$('day').innerHTML='<option value="all">Tout le voyage</option>'+tracks.map((t,i)=>`<option value="${i}">${t.name} (${(length(t.pts)/1000).toFixed(1)} km)</option>`).join('');$('status').textContent=`${tracks.length} trace(s) importée(s). Les fichiers n’ont pas été envoyés sur un serveur.`;stopDetect();draw();scheduleSave();}catch(e){$('status').textContent='Erreur : '+e.message;}}
+$('file').onchange=e=>loadFiles(e.target.files);$('day').onchange=()=>{fitNext=true;draw();scheduleSave()};
+// Spatial hash of simplified track, linear-ish detection; keep the original indices for GPX export.
 function detect(t,ti){
  const p=t.pts,step=Math.max(1,Math.ceil(p.length/2200)),sample=[];
  for(let i=0;i<p.length;i+=step)sample.push(i);
@@ -172,92 +61,121 @@ function detect(t,ti){
  for(const c of candidates){if(selected.some(s=>c.start<=s.end&&c.end>=s.start))continue;selected.push(c);if(selected.length>=35)break;}
  return selected.sort((a,b)=>a.start-b.start);
 }
-
-const pause=()=>new Promise(r=>setTimeout(r,20));
+const pause=()=>new Promise(resolve=>setTimeout(resolve,20));
+let busy=false;
 $('detect').onclick=async()=>{
  if(!tracks.length||busy)return;
- busy=true;$('detect').disabled=true;proposals=[];history=[];closeReview();
+ busy=true;$('detect').disabled=true;history.push(proposals.map(p=>!!p.accepted));proposals=[];updateUndo();
  try{
   for(let i=0;i<tracks.length;i++){
    $('progress').textContent=`Analyse ${i+1}/${tracks.length} : ${tracks[i].name}…`;
    await pause();proposals.push(...detect(tracks[i],i));
   }
-  $('progress').textContent=proposals.length?`${proposals.length} détour(s) détecté(s). Vérifie chaque proposition.`:'Aucun aller-retour détecté avec les critères actuels.';
-  draw();
- }catch(e){$('progress').textContent='Erreur : '+e.message}
- finally{busy=false;$('detect').disabled=!tracks.length}
+  $('progress').textContent=`Analyse terminée : ${proposals.length} détours à examiner.`;stopDetect();
+  draw();scheduleSave();
+ }catch(e){$('progress').textContent='Erreur : '+e.message;}
+ finally{busy=false;$('detect').disabled=false;}
 };
-function filtered(ti){
- const removed=proposals.filter(c=>c.ti===ti&&c.accepted).sort((a,b)=>a.start-b.start),pts=tracks[ti].pts,out=[];let r=0;
- for(let i=0;i<pts.length;i++){while(r<removed.length&&i>=removed[r].end)r++;if(r<removed.length&&i>removed[r].start&&i<removed[r].end)continue;out.push(pts[i])}
- return out;
-}
-function line(pts,color,width,opacity=1){
- if(pts.length<2)return;
- const stride=Math.max(1,Math.ceil(pts.length/3500)),out=[];
- for(let i=0;i<pts.length;i+=stride)out.push([pts[i].lat,pts[i].lon]);
- if((pts.length-1)%stride)out.push([pts.at(-1).lat,pts.at(-1).lon]);
- L.polyline(out,{color,weight:width,opacity,smoothFactor:2}).addTo(layer);
-}
-function draw(){
- layer.clearLayers();const selected=$('day').value,ids=selected==='all'?tracks.map((_,i)=>i):[+selected],bounds=[];
- for(const ti of ids){
-  const t=tracks[ti];if(!t)continue;
-  line(t.pts,colors[ti%colors.length],4,.9);
-  if(proposals.some(p=>p.ti===ti&&p.accepted))line(filtered(ti),'#16946d',3,.95);
-  for(const c of proposals.filter(c=>c.ti===ti&&!c.accepted))line(t.pts.slice(c.start,c.end+1),'#df7b25',5,.85);
-  for(let i=0;i<t.pts.length;i+=Math.max(1,Math.floor(t.pts.length/300)))bounds.push([t.pts[i].lat,t.pts[i].lon]);
+$('reset').onclick=()=>{history.push(proposals.map(p=>!!p.accepted));proposals.forEach(p=>p.accepted=false);updateUndo();draw();scheduleSave()};function filtered(ti){const removed=proposals.filter(c=>c.ti===ti&&c.accepted).sort((a,b)=>a.start-b.start),pts=tracks[ti].pts,out=[];let r=0;for(let i=0;i<pts.length;i++){while(r<removed.length&&i>=removed[r].end)r++;if(r<removed.length&&i>removed[r].start&&i<removed[r].end)continue;out.push(pts[i]);}return out;}function line(pts,color,width,opacity=1){if(pts.length<2)return;const stride=Math.max(1,Math.ceil(pts.length/3500));const out=[];for(let i=0;i<pts.length;i+=stride)out.push([pts[i].lat,pts[i].lon]);if((pts.length-1)%stride)out.push([pts.at(-1).lat,pts.at(-1).lon]);L.polyline(out,{color,weight:width,opacity,smoothFactor:2}).addTo(layer)}function draw(){layer.clearLayers();let selected=$('day').value,ids=selected==='all'?tracks.map((_,i)=>i):[+selected];let bounds=[];for(let ti of ids){let t=tracks[ti];let points=t.pts;if(comparison){line(points,colors[ti%colors.length],4,.85)}else{line(filtered(ti),colors[ti%colors.length],4,.9);for(let c of proposals.filter(c=>c.ti===ti&&!c.accepted))line(points.slice(c.start,c.end+1),'#df7b25',5,.8)}for(let p of points.filter((_,i)=>i%Math.max(1,Math.floor(points.length/300))===0))bounds.push([p.lat,p.lon]);}if(bounds.length&&fitNext)map.fitBounds(L.latLngBounds(bounds),{padding:[20,20]});fitNext=false;drawPOIs();$('daylegend').innerHTML=ids.map(i=>`<span><i class="dot" style="background:${colors[i%colors.length]}"></i>${escapeHtml(tracks[i].name)}</span>`).join('')+'<span><i class="dot" style="background:#df7b25"></i>À examiner</span>'; $('count').textContent=tracks.length;$('distance').textContent=(totalDistance/1000).toFixed(0)+' km';$('found').textContent=proposals.length;$('removed').textContent=(proposals.filter(p=>p.accepted).reduce((s,p)=>s+p.dist,0)/1000).toFixed(1)+' km';$('candidates').innerHTML=proposals.length?proposals.map((p,i)=>`<div class="candidate"><b>${tracks[p.ti].name}</b><div>${(p.dist/1000).toFixed(2)} km · éloignement max ${(p.maxRadius/1000).toFixed(2)} km</div>${stopsForProposal(p).map(st=>`<div style="color:#a3530a;font-weight:600">⚠ ${st.kind==='night'?'Nuit':'Pause'} de ${durationText(st.mins)} sur ce détour</div>`).join('')}<div class="row"><button class="secondary" onclick="zoomProposal(${i})">Voir sur carte</button><button onclick="toggleProposal(${i})">${p.accepted?'Rétablir':'Écarter le détour'}</button></div></div>`).join(''):'Aucune proposition pour le moment.';}window.toggleProposal=i=>{const p=proposals[i];if(!p)return;if(!p.accepted){const visits=stopsForProposal(p);if(visits.length&&!confirm('Attention : ce détour contient '+visits.map(st=>(st.kind==='night'?'une nuit':'une pause')+' de '+durationText(st.mins)).join(', ')+'. Supprimer malgré cet arrêt ?'))return;}history.push(proposals.map(p=>!!p.accepted));p.accepted=!p.accepted;updateUndo();draw();scheduleSave()};window.zoomProposal=i=>{let c=proposals[i],pts=tracks[c.ti].pts.slice(c.start,c.end+1);map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lon])),{padding:[35,35]});fitNext=false;};$('export').onclick=()=>{if(!tracks.length)return;let esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');let xml='<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="TraceClaire" xmlns="http://www.topografix.com/GPX/1/1">'+tracks.map((t,i)=>'<trk><name>'+esc(t.name)+'</name><trkseg>'+filtered(i).map(p=>`<trkpt lat="${p.lat}" lon="${p.lon}">${p.ele?'<ele>'+esc(p.ele)+'</ele>':''}${p.time?'<time>'+esc(p.time)+'</time>':''}</trkpt>`).join('')+'</trkseg></trk>').join('')+pois.filter(p=>chosen.has(p.id)).map(p=>`<wpt lat="${p.lat}" lon="${p.lon}"><name>${esc(p.name)}</name><type>${esc(p.type)}</type><desc>${esc(p.note||'')}</desc></wpt>`).join('')+'</gpx>';let a=document.createElement('a'),url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'}));a.href=url;a.download='voyage_nettoye.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)};
+
+// v0.5: optional basemap; a failed tile never prevents viewing the GPX.
+let satellite=null;const switcher=L.control({position:'topright'});switcher.onAdd=()=>{let d=L.DomUtil.create('div','mapcontrol');d.innerHTML='<label><input type="checkbox" id="satellite"> Vue satellite (Internet)</label>';L.DomEvent.disableClickPropagation(d);return d};switcher.addTo(map);
+$('satellite').onchange=e=>{if(e.target.checked){satellite=L.tileLayer('/api/satellite/{z}/{y}/{x}',{maxZoom:18,attribution:'Imagery © Esri et contributeurs'});satellite.on('tileerror',()=>{$('poistatus').textContent='Fond satellite indisponible sur cette connexion. Les traces restent visibles.'});satellite.addTo(map);satellite.bringToBack();}else if(satellite){map.removeLayer(satellite);satellite=null}};
+function durationText(mins){let h=Math.floor(mins/60),m=Math.round(mins%60);return h?`${h} h${m?' '+m+' min':''}`:`${m} min`}
+function stopDetect(){
+ stops=[];
+ for(let ti=0;ti<tracks.length;ti++){
+  const pts=tracks[ti].pts;
+  for(let i=0;i<pts.length-1;){
+   const t0=Date.parse(pts[i].time);if(!Number.isFinite(t0)){i++;continue}
+   let j=i+1;
+   while(j<pts.length){
+    const t=Date.parse(pts[j].time);
+    if(!Number.isFinite(t)||t<t0||t-t0>24*3600000||meters(pts[i],pts[j])>60)break;
+    j++;
+   }
+   const last=j-1,mins=(Date.parse(pts[last]?.time)-t0)/60000;
+   if(mins>=10){
+    const t1=Date.parse(pts[last].time),start=new Date(t0),finish=new Date(t1);
+    const crossesNight=start.toDateString()!==finish.toDateString()&&mins>=180;
+    stops.push({lat:pts[i].lat,lon:pts[i].lon,mins,ti,start:i,end:last,kind:crossesNight?'night':'pause',t0,t1});i=j;
+   }else i++;
+  }
  }
- if(bounds.length&&fitNext)map.fitBounds(L.latLngBounds(bounds),{padding:[25,25]});
- fitNext=false;
- $('legend').innerHTML=ids.filter(i=>tracks[i]).map(i=>`<span><i class="dot" style="background:${colors[i%colors.length]}"></i>${esc(tracks[i].name)}</span>`).join('')+'<span>🟠 À examiner</span><span>🟢 Nettoyé</span>';
- $('count').textContent=tracks.length;$('distance').textContent=(totalDistance/1000).toFixed(0)+' km';
- const accepted=proposals.filter(p=>p.accepted).length;
- $('candidates').innerHTML=proposals.length?`<p class="muted">${accepted} / ${proposals.length} détour(s) écarté(s)</p>`+proposals.map((p,i)=>`<div class="candidate ${p.accepted?'active':''}"><b>${esc(tracks[p.ti].name)}</b><div class="muted">${(p.dist/1000).toFixed(2)} km · éloignement max ${(p.maxRadius/1000).toFixed(2)} km</div><div class="row"><button class="secondary" data-zoom="${i}">Voir</button><button data-toggle="${i}">${p.accepted?'↶ Rétablir':'✂ Écarter'}</button></div></div>`).join(''):'<p class="muted">Lance la détection pour afficher les propositions.</p>';
- $('candidates').querySelectorAll('[data-zoom]').forEach(el=>el.onclick=()=>zoomProposal(+el.dataset.zoom));
- $('candidates').querySelectorAll('[data-toggle]').forEach(el=>el.onclick=()=>toggleProposal(+el.dataset.toggle));
- $('reviewAll').style.display=proposals.length?'block':'none';$('reviewAll').textContent=`▶ Tout réviser (${proposals.length})`;
- $('detect').disabled=!tracks.length||busy;$('export').disabled=!tracks.length;$('undo').disabled=!history.length;$('reset').disabled=!accepted;
+ $('poistatus').textContent=`${stops.length} arrêt(s) détecté(s) automatiquement (GPS horodaté requis). La nuit est une estimation modifiable.`;
+ drawPOIs();
 }
-function toggleProposal(i){history.push(proposals.map(p=>({accepted:p.accepted,reviewed:p.reviewed})));proposals[i].accepted=!proposals[i].accepted;proposals[i].reviewed=true;draw();if(reviewIndex>=0)renderReview()}
-function zoomProposal(i){const c=proposals[i],pts=tracks[c.ti].pts.slice(c.start,c.end+1);map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lon])),{padding:[35,35]});fitNext=false}
-$('undo').onclick=()=>{if(!history.length)return;const prev=history.pop();proposals.forEach((p,i)=>{p.accepted=prev[i].accepted;p.reviewed=prev[i].reviewed});draw();if(reviewIndex>=0)renderReview()};
-$('reset').onclick=()=>{history.push(proposals.map(p=>({accepted:p.accepted,reviewed:p.reviewed})));proposals.forEach(p=>{p.accepted=false;p.reviewed=false});draw();if(reviewIndex>=0)renderReview()};
-function closeReview(){reviewIndex=-1;if(reviewHighlight){layer.removeLayer(reviewHighlight);reviewHighlight=null}const panel=$('reviewPanel');if(panel)panel.style.display='none'}
-function renderReview(){
- if(reviewIndex<0||!proposals.length){closeReview();return}
- if(reviewIndex>=proposals.length){closeReview();$('progress').textContent='Révision terminée : '+proposals.filter(p=>p.reviewed).length+' détour(s) examinés sur '+proposals.length+'.';return}
- const c=proposals[reviewIndex],t=tracks[c.ti],pts=t.pts.slice(c.start,c.end+1),reviewed=proposals.filter(p=>p.reviewed).length;
- $('reviewPanel').style.display='block';
- $('reviewTitle').textContent=`Détour ${reviewIndex+1} / ${proposals.length}`;
- $('reviewInfo').textContent=`${t.name} · ${(c.dist/1000).toFixed(2)} km · éloignement max ${(c.maxRadius/1000).toFixed(2)} km · ${c.reviewed?(c.accepted?'Écarté':'Conservé'):'À examiner'}`;
- $('reviewBar').style.width=(100*reviewed/proposals.length)+'%';
- $('reviewPrev').disabled=reviewIndex===0;
- $('reviewNext').disabled=reviewIndex===proposals.length-1;
- $('reviewKeep').textContent=c.reviewed&&!c.accepted?'✓ Conservé':'✓ Laisser';
- $('reviewExclude').textContent=c.reviewed&&c.accepted?'✂ Écarté':'✂ Écarter';
- if(reviewHighlight)layer.removeLayer(reviewHighlight);
- reviewHighlight=L.polyline(pts.map(p=>[p.lat,p.lon]),{color:'#f0067b',weight:8,opacity:.9}).addTo(layer).bringToFront();
- if(pts.length>=2)map.fitBounds(reviewHighlight.getBounds(),{paddingTopLeft:[35,175],paddingBottomRight:[35,35],maxZoom:16});
-}
-function reviewDecision(accepted){
- if(reviewIndex<0)return;
- history.push(proposals.map(p=>({accepted:p.accepted,reviewed:p.reviewed})));
- const p=proposals[reviewIndex];p.accepted=accepted;p.reviewed=true;
- draw();reviewIndex++;renderReview();
-}
-$('reviewAll').onclick=()=>{if(proposals.length){reviewIndex=0;renderReview()}};
-$('reviewKeep').onclick=()=>reviewDecision(false);
-$('reviewExclude').onclick=()=>reviewDecision(true);
-$('reviewPrev').onclick=()=>{if(reviewIndex>0){reviewIndex--;renderReview()}};
-$('reviewNext').onclick=()=>{if(reviewIndex<proposals.length-1){reviewIndex++;renderReview()}};
-$('reviewClose').onclick=closeReview;
-$('reviewFinish').onclick=()=>{closeReview();$('progress').textContent=`${proposals.filter(p=>p.reviewed).length} / ${proposals.length} détour(s) examinés.`};
-$('export').onclick=()=>{
- if(!tracks.length)return;
- const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.4" xmlns="http://www.topografix.com/GPX/1/1">'+
- tracks.map((t,i)=>'<trk><name>'+esc(t.name)+'</name><trkseg>'+filtered(i).map(p=>`<trkpt lat="${p.lat}" lon="${p.lon}">${p.ele?'<ele>'+esc(p.ele)+'</ele>':''}${p.time?'<time>'+esc(p.time)+'</time>':''}</trkpt>`).join('')+'</trkseg></trk>').join('')+'</gpx>';
- const url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'})),a=document.createElement('a');a.href=url;const typed=$('exportName').value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.+$/,'');a.download=(typed||'GPX_Cleaner_nettoye').replace(/\.gpx$/i,'')+'.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+window.setStopKind=(index,kind)=>{if(stops[index]){stops[index].kind=kind;draw();scheduleSave();}};
+function stopsForProposal(p){const pts=tracks[p.ti].pts;return stops.filter(st=>st.ti===p.ti&&st.start>=p.start&&st.end<=p.end&&pts.length)}
+$('stops').onclick=()=>{stopDetect();scheduleSave()};
+function distToTrack(q){let best=Infinity;for(const t of tracks){let step=Math.max(1,Math.ceil(t.pts.length/1800));for(let i=0;i<t.pts.length;i+=step){let d=meters(q,t.pts[i]);if(d<best)best=d;}}return best}
+function classify(tags){if(tags.amenity==='restaurant'||tags.amenity==='cafe'||tags.amenity==='fast_food')return 'food';if(tags.natural||tags.waterway)return 'nature';if(tags.tourism==='camp_site'||tags.amenity==='fuel'||tags.shop||tags.tourism==='hotel'||tags.tourism==='guest_house')return 'practical';return 'tourism'}
+function drawPOIs(){poiLayer.clearLayers();let day=$('day').value,filter=$('poifilter').value;for(let st of stops){if(day!=='all'&&+day!==st.ti)continue;const idx=stops.indexOf(st),night=st.kind==='night';let marker=L.marker([st.lat,st.lon],{icon:L.divIcon({className:'',html:`<div style="background:${night?'#293d83':'#087c88'};color:white;border:2px solid white;border-radius:50%;width:29px;height:29px;display:grid;place-items:center;box-shadow:0 2px 8px #0006;font-size:17px">${night?'☾':'Ⅱ'}</div>`,iconSize:[33,33],iconAnchor:[16,16]})}).addTo(poiLayer);marker.bindPopup(`<b>${night?'Nuit estimée':'Pause GPS'}</b><br>Durée : ${durationText(st.mins)}<br><small>Basé sur les points GPS disponibles</small><br><button onclick="setStopKind(${idx},'pause')">Pause</button> <button onclick="setStopKind(${idx},'night')">Nuit</button>`)}for(let p of pois){if(filter!=='all'&&p.type!==filter)continue;let marker=L.circleMarker([p.lat,p.lon],{radius:chosen.has(p.id)?9:6,color:p.type==='personal'?'#a73eaf':'#b66d0b',fillOpacity:.85}).addTo(poiLayer);marker.bindPopup(`<b>${escapeHtml(p.name)}</b><br>${escapeHtml(p.type)}<br>${Math.round(p.distance||0)} m de la trace<br>${chosen.has(p.id)?'Inclus dans le GPX':'Non sélectionné'}`)}renderPOIs()}
+function escapeHtml(s){return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')}
+function renderPOIs(){let filter=$('poifilter').value,shown=pois.filter(p=>filter==='all'||p.type===filter).sort((a,b)=>(a.distance||0)-(b.distance||0));$('poilist').innerHTML=shown.slice(0,200).map(p=>`<div class="poi-item"><label><input type="checkbox" data-poiid="${p.id}" ${chosen.has(p.id)?'checked':''}> <b>${escapeHtml(p.name)}</b></label><small>${escapeHtml(p.type)} · ${Math.round(p.distance||0)} m de la trace</small><button class="secondary" data-zoompoi="${p.id}">Voir</button></div>`).join('')||'<p class="muted">Aucun POI. Lance une recherche ou ajoute un point personnel.</p>';for(let el of $('poilist').querySelectorAll('[data-poiid]'))el.onchange=()=>{el.checked?chosen.add(el.dataset.poiid):chosen.delete(el.dataset.poiid);drawPOIs();scheduleSave()};for(let el of $('poilist').querySelectorAll('[data-zoompoi]'))el.onclick=()=>{let p=pois.find(x=>x.id===el.dataset.zoompoi);if(p)map.setView([p.lat,p.lon],15)}}
+$('poifilter').onchange=drawPOIs;
+map.on('click',e=>{if(!$('addmode').checked)return;let name=prompt('Nom du point d’intérêt :');if(!name)return;let note=prompt('Note ou description (facultatif) :')||'';let id='mine-'+Date.now()+'-'+pois.length;pois.push({id,lat:e.latlng.lat,lon:e.latlng.lng,name,type:'personal',note,distance:distToTrack(e.latlng)});chosen.add(id);drawPOIs();scheduleSave()});
+// POI: bounded, sequential searches with abort and actionable error messages.
+let poiAbort=null;
+$('cancelpoi').onclick=()=>poiAbort?.abort();
+$('fetchpoi').onclick=async()=>{
+ if(!tracks.length){$('poistatus').textContent='Importe une trace.';return}
+ if(!confirm('Rechercher des POI : des coordonnées échantillonnées seront transmises à OpenStreetMap. Continuer ?'))return;
+ const btn=$('fetchpoi');btn.disabled=true;$('cancelpoi').disabled=false;poiAbort=new AbortController();
+ const selected=$('day').value, ids=selected==='all'?tracks.map((_,i)=>i):[Number(selected)];
+ const radius=Number($('poiradius').value);let sampled=[];
+ for(let ti of ids){const pts=tracks[ti].pts;const stride=Math.max(1,Math.floor(pts.length/60));
+  for(let i=0;i<pts.length;i+=stride){let p=pts[i];if(!sampled.some(q=>meters(q,p)<radius*1.7))sampled.push({lat:p.lat,lon:p.lon});}
+ }
+ const limit=selected==='all'?24:18;
+ if(sampled.length>limit){const chosenPoints=[];for(let i=0;i<limit;i++)chosenPoints.push(sampled[Math.floor(i*(sampled.length-1)/Math.max(1,limit-1))]);sampled=chosenPoints;}
+ const found=new Map(),errors=[];let success=0;
+ try{
+ for(let k=0;k<sampled.length;k++){
+  if(poiAbort.signal.aborted)break;
+  $('poistatus').textContent=`Recherche zone ${k+1}/${sampled.length} (rayon ${radius} m)… ${found.size} POI trouvés`;
+  try{
+   const response=await fetch('/api/pois',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:[sampled[k]],radius}),signal:poiAbort.signal});
+   const json=await response.json();if(!response.ok)throw Error(json.error||'HTTP '+response.status);success++;
+   for(let e of json.elements||[]){let lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon;if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
+    let id=e.type+'/'+e.id;if(found.has(id))continue;let distance=distToTrack({lat,lon});if(distance>radius+300)continue;
+    let tags=e.tags||{};found.set(id,{id,name:tags.name||tags['name:fr']||tags.tourism||tags.natural||tags.amenity||'Point d’intérêt',lat,lon,type:classify(tags),distance,note:tags.description||''});}
+  }catch(e){if(e.name==='AbortError')break;errors.push(`Zone ${k+1} : ${e.message}`);if(errors.length>=3&&!success)break;}
+ }
+ pois=pois.filter(p=>p.type==='personal').concat([...found.values()]);drawPOIs();scheduleSave();
+ $('poistatus').textContent=(poiAbort.signal.aborted?'Recherche interrompue. ':'' )+`${found.size} POI trouvés (${success} zones réussies sur ${sampled.length}).`+(errors.length?' Erreur : '+errors[0]:'')+(success===0?' Vérifie que le programme Windows est ouvert et consulte sa fenêtre noire pour les détails.':'');
+ }finally{btn.disabled=false;$('cancelpoi').disabled=true;poiAbort=null;}
 };
-draw();
-</script></body></html>
+
+// Version 0.9: local session restoration via IndexedDB, no server transmission.
+function updateUndo(){$('undo').disabled=history.length===0}
+$('undo').onclick=()=>{const previous=history.pop();if(!previous)return;proposals.forEach((p,i)=>p.accepted=!!previous[i]);updateUndo();draw();scheduleSave()};
+$('compare').onclick=()=>{comparison=!comparison;$('compare').setAttribute('aria-pressed',String(comparison));$('compare').textContent=comparison?'Afficher : original':'Afficher : nettoyé';draw();scheduleSave()};
+function openSessionDB(){return new Promise((resolve,reject)=>{if(!window.indexedDB)return reject(Error('Stockage local indisponible'));const req=indexedDB.open('clean-gpx-session',1);req.onupgradeneeded=()=>req.result.createObjectStore('session');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function dbWrite(value){const db=await openSessionDB();return new Promise((resolve,reject)=>{const tx=db.transaction('session','readwrite');tx.objectStore('session').put(value,'current');tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
+async function dbRead(){const db=await openSessionDB();return new Promise((resolve,reject)=>{const tx=db.transaction('session','readonly'),req=tx.objectStore('session').get('current');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close()})}
+let saveSequence=0;
+function scheduleSave(){if(restoring)return;clearTimeout(saveTimer);const sequence=++saveSequence;$('save-status').textContent='Sauvegarde en cours…';saveTimer=setTimeout(async()=>{if(sequence!==saveSequence)return;try{await dbWrite({tracks,proposals,stops,pois,chosen:[...chosen],day:$('day').value,comparison,history:history.slice(-20),savedAt:Date.now()});if(sequence===saveSequence)$('save-status').textContent='✓ Sauvegardé sur cet appareil'}catch(e){$('save-status').textContent='⚠ Sauvegarde impossible (stockage saturé ou bloqué)'}},650)}
+async function restoreSession(){try{const data=await dbRead();if(!data?.tracks?.length||tracks.length)return;restoring=true;tracks=data.tracks;proposals=data.proposals||[];stops=data.stops||[];pois=data.pois||[];chosen=new Set(data.chosen||[]);history=data.history||[];comparison=!!data.comparison;totalDistance=tracks.reduce((sum,t)=>sum+length(t.pts),0);$('day').innerHTML='<option value="all">Tout le voyage</option>'+tracks.map((t,i)=>`<option value="${i}">${escapeHtml(t.name)} (${(length(t.pts)/1000).toFixed(1)} km)</option>`).join('');$('day').value=data.day||'all';if($('day').selectedIndex<0)$('day').value='all';$('compare').textContent=comparison?'Afficher : original':'Afficher : nettoyé';$('compare').setAttribute('aria-pressed',String(comparison));updateUndo();fitNext=true;draw();$('status').textContent='Session précédente restaurée automatiquement sur cet appareil.';$('save-status').textContent='✓ Session restaurée'}catch(e){$('save-status').textContent='Sauvegarde locale indisponible'}finally{restoring=false}}
+restoreSession();
+
+// JPEG EXIF GPS, browser-side. No upload to the server.
+function exifPosition(buf){const v=new DataView(buf);if(v.getUint16(0)!==0xffd8)return null;let off=2;while(off+4<v.byteLength){if(v.getUint8(off)!==0xff)break;let marker=v.getUint8(off+1),len=v.getUint16(off+2);if(marker===0xe1&&len>10){let t=off+10;if(v.getUint32(off+4)!==0x45786966)return null;let le=v.getUint16(t)===0x4949;let u16=(a)=>v.getUint16(a,le),u32=(a)=>v.getUint32(a,le);let root=t+u32(t+4);function tags(at){let out={};if(at<0||at+2>v.byteLength)return out;let n=u16(at);for(let j=0;j<Math.min(n,80);j++){let a=at+2+j*12;if(a+12>v.byteLength)break;out[u16(a)]={type:u16(a+2),count:u32(a+4),offset:u32(a+8),raw:a+8}}return out}let top=tags(root);if(!top[0x8825])return null;let gps=tags(t+top[0x8825].offset);function ascii(x){return x?String.fromCharCode(v.getUint8(x.raw)):''}function coords(x){if(!x||x.count!==3)return null;let a=t+x.offset;if(a+24>v.byteLength)return null;let vals=[];for(let i=0;i<3;i++){let den=u32(a+i*8+4);if(!den)return null;vals.push(u32(a+i*8)/den)}return vals[0]+vals[1]/60+vals[2]/3600}let lat=coords(gps[2]),lon=coords(gps[4]);if(lat===null||lon===null)return null;if(ascii(gps[1])==='S')lat=-lat;if(ascii(gps[3])==='W')lon=-lon;return {lat,lon}}off+=2+len}return null}
+$('photos').onchange=async e=>{photoLayer.clearLayers();let ok=0,missing=0;for(const f of [...e.target.files].slice(0,250)){try{let loc=exifPosition(await f.arrayBuffer());if(!loc){missing++;continue}let url=URL.createObjectURL(f);let marker=L.marker([loc.lat,loc.lon]).addTo(photoLayer);let node=document.createElement('div');let title=document.createElement('b');title.textContent=f.name;let img=document.createElement('img');img.src=url;img.style='display:block;max-width:240px;max-height:180px;margin-top:6px';node.append(title,img);marker.bindPopup(node);ok++}catch(err){missing++}}$('photostatus').textContent=`${ok} photos positionnées, ${missing} sans GPS ou illisibles. Import limité à 250 photos JPG.`};
+</script>
+<script>
+(function(){
+ const tools=document.getElementById('mobile-tools'),scrim=document.getElementById('mobile-scrim');
+ function setOpen(open){document.body.classList.toggle('sheet-open',open);tools.setAttribute('aria-expanded',String(open));tools.textContent=open?'× Fermer':'☰ Outils';setTimeout(()=>{if(window.map&&window.map.invalidateSize)window.map.invalidateSize()},260)}
+ tools.addEventListener('click',()=>setOpen(!document.body.classList.contains('sheet-open')));
+ scrim.addEventListener('click',()=>setOpen(false));
+ document.getElementById('mobile-handle').addEventListener('click',()=>setOpen(false));
+ document.getElementById('mobile-export').addEventListener('click',()=>document.getElementById('export').click());
+ document.getElementById('file').addEventListener('change',()=>setOpen(false));
+ document.querySelector('aside').addEventListener('click',e=>{if(e.target.closest('[onclick^="zoomProposal"]'))setOpen(false)});
+ let touchStart=null;
+ document.getElementById('mobile-handle').addEventListener('touchstart',e=>touchStart=e.touches[0].clientY,{passive:true});
+ document.getElementById('mobile-handle').addEventListener('touchend',e=>{if(touchStart!==null&&e.changedTouches[0].clientY-touchStart>45)setOpen(false);touchStart=null},{passive:true});
+})();
+</script>
+</body></html>

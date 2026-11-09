@@ -1,0 +1,9 @@
+{
+  "name": "CLEAN GPX — TraceClaire",
+  "short_name": "CLEAN GPX",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f5f7",
+  "theme_color": "#152b37",
+  "description": "Nettoyage de traces GPX sur ordinateur et mobile"
+}
