@@ -1,6 +1,6 @@
-/* GPX Cleaner PWA 1.0.13 — cache uniquement les ressources de l'application.
+/* GPX Cleaner PWA 1.0.14 — cache uniquement les ressources de l'application.
    Les traces GPX et les données IndexedDB ne sont jamais mises en cache ici. */
-const CACHE = 'gpx-cleaner-shell-v1-0-13';
+const CACHE = 'gpx-cleaner-shell-v1-0-14';
 const APP_SHELL = ['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 const LIBRARY_HOSTS = new Set(['unpkg.com','cdnjs.cloudflare.com']);
 const LIBRARIES = [
@@ -18,7 +18,7 @@ self.addEventListener('install', event => {
       const response=await fetch(url,{mode:'cors'});
       if(response.ok) await cache.put(url,response);
     }));
-  }).then(()=>self.skipWaiting()));
+  }));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('gpx-cleaner-shell-')&&k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()]));
@@ -42,3 +42,5 @@ self.addEventListener('fetch', event => {
     event.respondWith(caches.match(req).then(cached=>cached||fetch(req).then(response=>{if(response.ok||response.type==='opaque'){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(c=>c.put(req,copy)));}return response;})));
   }
 });
+
+self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});

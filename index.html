@@ -99,7 +99,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 }
 @media(min-width:761px){#maptip{min-width:170px}}
 
-/* 1.0.13 — commandes mobiles simplifiées */
+/* 1.0.14 — commandes mobiles simplifiées */
 #dayPicker{display:block}
 @media(max-width:760px){
  #mobileDock{justify-content:space-between}
@@ -111,9 +111,26 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
  #stopListDetails>summary{display:none!important}
  aside .step.mobileExpanded #stopListDetails>summary{display:none!important}
 }
+
+/* 1.0.14 — confort PC et mise à jour PWA */
+#pcToolbar{display:none}#pcReviewHint{font-size:11px;color:#5c727a}
+#updateNotice[hidden]{display:none!important}
+#updateNotice{position:fixed;z-index:4000;left:50%;bottom:20px;transform:translateX(-50%);background:#fff;border:1px solid #bdd7d7;box-shadow:0 6px 25px #0004;border-radius:12px;padding:10px;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 20px);font-size:13px}
+#updateNotice button{padding:9px 12px;white-space:nowrap}
+@media(min-width:761px){
+ #pcToolbar{display:flex;position:fixed;z-index:1050;bottom:14px;left:375px;gap:8px;align-items:center;background:#fffe;border:1px solid #d7e3e5;border-radius:12px;padding:7px;box-shadow:0 3px 14px #0002;transition:left .2s}
+ #pcToolbar button{padding:9px 12px;font-size:13px}
+ #pcReviewHint{display:none}body.pcReview #pcReviewHint{display:inline}
+ body.pcCollapsed main{grid-template-columns:0 1fr}body.pcCollapsed aside{padding:0;border:0;overflow:hidden}
+ body.pcCollapsed #pcToolbar{left:14px}
+ #reviewPanel{top:20px}
+ #stopList{max-height:290px}
+ .stop-clock{font-size:11px;color:#60747c}
+}
+@media(max-width:760px){#pcToolbar{display:none!important}#updateNotice{bottom:75px;flex-wrap:wrap;justify-content:center}}
 </style></head>
-<body><header><b>✂ GPX Cleaner <small>1.0.13</small></b><small>Importer · Nettoyer · Exporter</small></header>
-<div id="mobileScrim"></div><nav id="mobileDock"><button class="secondary" id="mobileTools">☰ Outils</button><button class="secondary" id="mobileCompare" type="button" style="display:none">⇄ Voir avant</button></nav><main><aside><div id="mobileSheetHead"><span class="sheetHandle"></span><div class="sheetHeadRow"><strong>Mes outils</strong><button id="mobileClose" type="button" class="secondary" aria-label="Fermer les outils">✕</button></div><p>Choisis une action pour travailler sur ta trace.</p></div>
+<body><div id="updateNotice" role="status" aria-live="polite" hidden><span>Une nouvelle version de GPX Cleaner est disponible.</span><button id="applyUpdate" type="button">Mettre à jour</button><button id="dismissUpdate" class="secondary" type="button" aria-label="Plus tard">✕</button></div><header><b>✂ GPX Cleaner <small>1.0.14</small></b><small>Importer · Nettoyer · Exporter</small></header>
+<div id="mobileScrim"></div><div id="pcToolbar"><button id="pcSidebar" class="secondary" type="button" title="Masquer ou afficher les outils">☰ Outils</button><button id="pcCompare" class="secondary" type="button" disabled>⇄ Voir avant</button><span id="pcReviewHint">Révision : ← → pour naviguer · C conserver · S supprimer</span></div><nav id="mobileDock"><button class="secondary" id="mobileTools">☰ Outils</button><button class="secondary" id="mobileCompare" type="button" style="display:none">⇄ Voir avant</button></nav><main><aside><div id="mobileSheetHead"><span class="sheetHandle"></span><div class="sheetHeadRow"><strong>Mes outils</strong><button id="mobileClose" type="button" class="secondary" aria-label="Fermer les outils">✕</button></div><p>Choisis une action pour travailler sur ta trace.</p></div>
 <section class="step"><h2>1. Importer une ou plusieurs traces</h2>
 <label class="upload">📁 Choisir un ou plusieurs fichiers GPX / OSF<input id="file" type="file" accept=".gpx,.osf" multiple></label>
 <p class="muted">Tu peux sélectionner plusieurs traces en une seule fois : chacune aura sa propre couleur sur la carte.</p>
@@ -319,9 +336,9 @@ function line(pts,color,width,opacity=1){
  if(pts.length<2)return;
  let from=0;for(let i=1;i<=pts.length;i++)if(i===pts.length||pts[i].seg!==pts[i-1].seg){const sub=pts.slice(from,i);if(sub.length>=2){const reduced=simplified(sub);shownPoints+=reduced.length;L.polyline(reduced.map(p=>[p.lat,p.lon]),{color,weight:width,opacity,smoothFactor:0}).addTo(layer)}from=i}
 }
-function scheduleRedraw(){clearTimeout(renderTimer);renderTimer=setTimeout(()=>{if(tracks.length)draw()},100)}
+function scheduleRedraw(){clearTimeout(renderTimer);renderTimer=setTimeout(()=>{if(tracks.length)draw(false)},130)}
 map.on('zoomend',scheduleRedraw);
-function draw(){
+function draw(refreshUI=true){
  layer.clearLayers();shownPoints=0;const selected=$('day').value,ids=selected==='all'?tracks.map((_,i)=>i):[+selected],bounds=[];
  for(const ti of ids){
   const t=tracks[ti];if(!t)continue;
@@ -334,6 +351,7 @@ function draw(){
  if(bounds.length&&fitNext)map.fitBounds(L.latLngBounds(bounds),{padding:[25,25]});
  fitNext=false;
  drawStops();$('mapCount').textContent=`${shownPoints.toLocaleString('fr-FR')} points dessinés · ${ids.reduce((n,i)=>n+(tracks[i]?.pts.length||0),0).toLocaleString('fr-FR')} points GPX`;
+ if(!refreshUI)return;
  $('legend').innerHTML=ids.filter(i=>tracks[i]).map(i=>`<span><i class="dot" style="background:${colors[i%colors.length]}"></i>${esc(tracks[i].name)}</span>`).join('')+'<span>🟠 À examiner</span><span>🟢 Nettoyé</span>';
  $('count').textContent=tracks.length;$('distance').textContent=(totalDistance/1000).toFixed(0)+' km';
  const accepted=proposals.filter(p=>p.accepted).length;const removed=proposals.filter(p=>p.accepted).reduce((n,p)=>n+p.dist,0);$('cleanStats').textContent=`${accepted} détour(s) écarté(s) · ${(removed/1000).toFixed(2)} km retirés (estimation)`;$('compare').disabled=!tracks.length;$('compare').textContent=comparison?'Afficher : trace originale':'Afficher : trace nettoyée';
@@ -341,18 +359,18 @@ function draw(){
  $('candidates').querySelectorAll('[data-zoom]').forEach(el=>el.onclick=()=>zoomProposal(+el.dataset.zoom));
  $('candidates').querySelectorAll('[data-toggle]').forEach(el=>el.onclick=()=>toggleProposal(+el.dataset.toggle));
  $('reviewAll').style.display=proposals.length?'block':'none';$('reviewAll').textContent=`▶ Tout réviser (${proposals.length})`;
- $('detect').disabled=!tracks.length||busy;$('export').disabled=!tracks.length;$('undo').disabled=!history.length;$('reset').disabled=!accepted;updateMobileControls();
+ $('detect').disabled=!tracks.length||busy;$('export').disabled=!tracks.length;$('undo').disabled=!history.length;$('reset').disabled=!accepted;updateMobileControls();$('pcCompare').disabled=!tracks.length;$('pcCompare').textContent=comparison?'⇄ Voir après':'⇄ Voir avant';
 }
 function toggleProposal(i){if(!proposals[i].accepted&&!confirmStopRemoval(proposals[i]))return;history.push(proposals.map(p=>({accepted:p.accepted,reviewed:p.reviewed})));proposals[i].accepted=!proposals[i].accepted;proposals[i].reviewed=true;draw();scheduleSave();if(reviewIndex>=0)renderReview()}
 function zoomProposal(i){const c=proposals[i],pts=tracks[c.ti].pts.slice(c.start,c.end+1);map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lon])),{padding:[35,35]});fitNext=false}
 $('undo').onclick=()=>{if(!history.length)return;const prev=history.pop();proposals.forEach((p,i)=>{p.accepted=prev[i].accepted;p.reviewed=prev[i].reviewed});draw();scheduleSave();if(reviewIndex>=0)renderReview()};
 $('reset').onclick=()=>{history.push(proposals.map(p=>({accepted:p.accepted,reviewed:p.reviewed})));proposals.forEach(p=>{p.accepted=false;p.reviewed=false});draw();scheduleSave();if(reviewIndex>=0)renderReview()};
-function closeReview(){reviewIndex=-1;if(reviewHighlight){layer.removeLayer(reviewHighlight);reviewHighlight=null}const panel=$('reviewPanel');if(panel)panel.style.display='none'}
+function closeReview(){document.body.classList.remove('pcReview');reviewIndex=-1;if(reviewHighlight){layer.removeLayer(reviewHighlight);reviewHighlight=null}const panel=$('reviewPanel');if(panel)panel.style.display='none'}
 function renderReview(){
  if(reviewIndex<0||!proposals.length){closeReview();return}
  if(reviewIndex>=proposals.length){closeReview();$('progress').textContent='Révision terminée : '+proposals.filter(p=>p.reviewed).length+' détour(s) examinés sur '+proposals.length+'.';return}
  const c=proposals[reviewIndex],t=tracks[c.ti],pts=t.pts.slice(c.start,c.end+1),reviewed=proposals.filter(p=>p.reviewed).length;
- $('reviewPanel').style.display='block';
+ document.body.classList.add('pcReview');$('reviewPanel').style.display='block';
  $('reviewTitle').textContent=`Détour ${reviewIndex+1} / ${proposals.length}`;
  $('reviewInfo').textContent=`${t.name} · ${(c.dist/1000).toFixed(2)} km · éloignement max ${(c.maxRadius/1000).toFixed(2)} km · ${c.reviewed?(c.accepted?'Écarté':'Conservé'):'À examiner'}`;
  $('reviewBar').style.width=(100*reviewed/proposals.length)+'%';
@@ -392,17 +410,18 @@ function detectStops(){
    if(mins>=10){const t1=Date.parse(pts[last].time),night=new Date(t0).toDateString()!==new Date(t1).toDateString()&&mins>=180;
     const old=previous.find(st=>st.ti===ti&&Math.abs(st.t0-t0)<60000&&meters(st,{lat:pts[i].lat,lon:pts[i].lon})<100);
     const type=old?.type||(old?.kind==='night'?'bivouac':old?.kind==='pause'?'other':night?'bivouac':'other');
-    stops.push({lat:pts[i].lat,lon:pts[i].lon,mins,ti,start:i,end:last,kind:STOP_TYPES[type]?.night?'night':'pause',type,t0,t1});i=j}else i++;
+    stops.push({lat:pts[i].lat,lon:pts[i].lon,mins,ti,start:i,end:last,kind:STOP_TYPES[type]?.night?'night':'pause',type,t0,t1,hidden:!!old?.hidden});i=j}else i++;
   }
  }
  renderStops();
 }
 function stopsForProposal(p){return stops.filter(st=>st.ti===p.ti&&st.start<=p.end&&st.end>=p.start)}
 function confirmStopRemoval(p){const visits=stopsForProposal(p);return !visits.length||confirm('⚠ Ce détour contient '+visits.map(st=>stopType(st).label+' de '+durationText(st.mins)).join(', ')+'.\nÉcarter quand même le détour ?')}
+function stopClock(t){return Number.isFinite(t)?new Date(t).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—'}
 function renderStops(){
  $('stopsStatus').textContent=stops.length?`${stops.length} arrêt(s) détecté(s) (au moins 10 min).`:'Aucun arrêt détecté. Des horaires GPS sont nécessaires.';
  $('stopListSummary').textContent=`Détail des arrêts (${stops.length})`;
- $('stopList').innerHTML=stops.map((st,i)=>`<div class="stopitem ${st.hidden?'is-hidden':''}"><span class="stop-meta"><b>${esc(stopType(st).label)}</b> · ${durationText(st.mins)} · ${esc(tracks[st.ti]?.name||'')}</span><select aria-label="Type d'arrêt" data-stoptype="${i}">${typeOptions(st)}</select><button class="secondary" data-stopzoom="${i}">Voir</button><button class="secondary stop-visibility" data-stophide="${i}" aria-label="${st.hidden?'Réafficher':'Masquer'} cet arrêt">${st.hidden?'Afficher':'Masquer'}</button></div>`).join('');
+ $('stopList').innerHTML=stops.map((st,i)=>`<div class="stopitem ${st.hidden?'is-hidden':''}"><span class="stop-meta"><b>${esc(stopType(st).label)}</b> · ${durationText(st.mins)}<span class="stop-clock"> · ${stopClock(st.t0)} → ${stopClock(st.t1)}</span> · ${esc(tracks[st.ti]?.name||'')}</span><select aria-label="Type d'arrêt" data-stoptype="${i}">${typeOptions(st)}</select><button class="secondary" data-stopzoom="${i}">Voir</button><button class="secondary stop-visibility" data-stophide="${i}" aria-label="${st.hidden?'Réafficher':'Masquer'} cet arrêt">${st.hidden?'Afficher':'Masquer'}</button></div>`).join('');
  $('stopList').querySelectorAll('[data-stopzoom]').forEach(el=>el.onclick=()=>{const st=stops[+el.dataset.stopzoom];map.setView([st.lat,st.lon],16);document.body.classList.remove('toolsOpen')});
  $('stopList').querySelectorAll('[data-stophide]').forEach(el=>el.onclick=()=>setStopHidden(+el.dataset.stophide,!stops[+el.dataset.stophide].hidden));
  $('stopList').querySelectorAll('[data-stoptype]').forEach(el=>el.onchange=()=>setStopType(+el.dataset.stoptype,el.value));
@@ -413,12 +432,11 @@ function setStopKind(i){if(!stops[i])return;setStopType(i,stops[i].kind==='night
 function drawStops(){stopLayer.clearLayers();if(!$('showStops').checked)return;const selected=$('day').value;
  stops.forEach((st,i)=>{if(st.hidden)return;if(selected!=='all'&&+selected!==st.ti)return;const type=stopType(st);L.marker([st.lat,st.lon],{icon:L.divIcon({className:'',html:pinSVG(st),iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-34]})}).addTo(stopLayer).bindPopup(`<b>${esc(type.label)}</b><br>Durée : ${durationText(st.mins)}<br><label>Catégorie <select id="popupStopType" aria-label="Catégorie de l'arrêt">${typeOptions(st)}</select></label><br><button id="popupHideStop" type="button" style="margin-top:8px">Masquer cet arrêt</button>`).on('popupopen',()=>{const sel=document.getElementById('popupStopType');if(sel)sel.onchange=()=>{setStopType(i,sel.value);map.closePopup()};const hide=document.getElementById('popupHideStop');if(hide)hide.onclick=()=>{setStopHidden(i,true);map.closePopup()}})});
 }
-$('toggleStops').onclick=()=>{$('showStops').checked=!$('showStops').checked;drawStops();updateMobileControls()};
-$('viewStops').onclick=()=>{$('stopListDetails').open=!$('stopListDetails').open;updateMobileControls()};
-$('showStops').onchange=drawStops;
+$('toggleStops').onclick=()=>{$('showStops').checked=!$('showStops').checked;drawStops();updateMobileControls()};$('viewStops').onclick=()=>{$('stopListDetails').open=!$('stopListDetails').open;updateMobileControls()};$('showStops').onchange=drawStops;
 function toggleComparison(){if(!tracks.length)return;comparison=!comparison;draw();scheduleSave();document.body.classList.remove('toolsOpen')}
  $('compare').onclick=toggleComparison;
  $('mobileCompare').onclick=toggleComparison;
+ $('pcCompare').onclick=toggleComparison;
  function updateMobileControls(){
   $('mobileCompare').style.display=tracks.length?'block':'none';
   $('mobileCompare').textContent=comparison?'⇄ Voir après':'⇄ Voir avant';
@@ -438,7 +456,7 @@ $('export').onclick=()=>{
  if(!tracks.length)return;
  const pending=proposals.filter(p=>!p.reviewed).length;
  if(pending&&!confirm(`${pending} détour(s) n'ont pas encore été examinés. Exporter quand même ?`))return;
- const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.13" xmlns="http://www.topografix.com/GPX/1/1">'+
+ const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.14" xmlns="http://www.topografix.com/GPX/1/1">'+
  tracks.map((t,i)=>{const pts=filtered(i);const segs=[];let group=[];for(const p of pts){if(group.length&&p.seg!==group[0].seg){segs.push(group);group=[]}group.push(p)}if(group.length)segs.push(group);return '<trk><name>'+esc(t.name)+'</name>'+segs.map(seg=>'<trkseg>'+seg.map(exportPoint).join('')+'</trkseg>').join('')+'</trk>'}).join('')+'</gpx>';
  const url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'})),a=document.createElement('a');a.href=url;const typed=$('exportName').value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.+$/,'');a.download=(typed||'GPX_Cleaner_nettoye').replace(/\.gpx$/i,'')+'.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };
@@ -480,12 +498,39 @@ draw();restoreSession();
  $('stopListDetails').open=!mobile();
  window.addEventListener('resize',()=>{if(!mobile())$('stopListDetails').open=true;});
 })();
+
+// Commandes PC : carte élargie et révision au clavier.
+$('pcSidebar').onclick=()=>{document.body.classList.toggle('pcCollapsed');setTimeout(()=>map.invalidateSize(),230)};
+document.addEventListener('keydown',e=>{
+ if(window.matchMedia('(max-width:760px)').matches||reviewIndex<0||e.altKey||e.ctrlKey||e.metaKey)return;
+ const tag=e.target?.tagName;if(['INPUT','TEXTAREA','SELECT'].includes(tag)||e.target?.isContentEditable)return;
+ const key=e.key.toLowerCase();
+ if(key==='arrowright'&&reviewIndex<proposals.length-1){e.preventDefault();reviewIndex++;renderReview()}
+ else if(key==='arrowleft'&&reviewIndex>0){e.preventDefault();reviewIndex--;renderReview()}
+ else if(key==='c'){e.preventDefault();reviewDecision(false)}
+ else if(key==='s'){e.preventDefault();reviewDecision(true)}
+});
 </script>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js', {scope:'./'})
-      .catch(err => console.warn('PWA : cache hors connexion indisponible', err));
-  });
+ let waitingWorker=null,reloading=false;
+ const hadController=!!navigator.serviceWorker.controller;
+ const notice=document.getElementById('updateNotice');
+ document.getElementById('applyUpdate').onclick=()=>{if(waitingWorker)waitingWorker.postMessage({type:'SKIP_WAITING'})};
+ document.getElementById('dismissUpdate').onclick=()=>{notice.hidden=true};
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!hadController||reloading)return;reloading=true;window.location.reload()});
+ window.addEventListener('load',async()=>{
+  try{
+   const registration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});
+   const ready=()=>{if(registration.waiting&&navigator.serviceWorker.controller){waitingWorker=registration.waiting;notice.hidden=false}};
+   ready();registration.addEventListener('updatefound',()=>{
+    const installing=registration.installing;
+    if(installing)installing.addEventListener('statechange',()=>{if(installing.state==='installed')ready()});
+   });
+   // Vérification au lancement, puis au retour au premier plan.
+   registration.update().catch(()=>{});
+   document.addEventListener('visibilitychange',()=>{if(!document.hidden)registration.update().catch(()=>{})});
+  }catch(err){console.warn('PWA : cache hors connexion indisponible',err)}
+ });
 }
 </script></body></html>
