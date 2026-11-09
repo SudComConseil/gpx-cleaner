@@ -31,9 +31,9 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 
 #stopList{max-height:190px;overflow:auto;font-size:13px}.stopitem{padding:7px 0;border-bottom:1px solid #e5ebed}.stopitem button{padding:5px 9px;font-size:12px}.stop-pin{width:32px;height:40px;position:relative;filter:drop-shadow(0 2px 3px #0005)}.stop-pin svg{display:block}.stop-pin .pin-shape{fill:#e47b26;stroke:white;stroke-width:2.5}.stop-pin.night .pin-shape{fill:#276ba9}.stop-pin .pin-symbol{fill:none;stroke:white;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}.stopitem select{width:auto;max-width:155px;padding:6px;font-size:12px}.stopitem{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.stopitem .stop-meta{flex:1;min-width:140px}
 #mapCount{position:absolute;z-index:510;bottom:12px;left:12px;background:#fffe;padding:5px 9px;border-radius:7px;font-size:11px;color:#405b65;pointer-events:none}#mobileDock,#mobileScrim{display:none}
-@media(max-width:760px){html,body{height:100%;overflow:hidden}header{height:54px;padding:10px 13px}header b{font-size:17px}header>small{display:none}main{display:block;height:calc(100dvh - 54px)}#map{height:100%;min-height:0}aside{position:fixed;z-index:1200;left:0;right:0;bottom:0;max-height:80dvh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 25px #0003;transform:translateY(110%);transition:transform .2s;padding:12px 18px 90px}body.toolsOpen aside{transform:translateY(0)}#mobileScrim{position:fixed;inset:54px 0 0;background:#0006;z-index:1100}body.toolsOpen #mobileScrim{display:block}#mobileDock{display:flex;position:fixed;z-index:1050;bottom:0;left:0;right:0;gap:7px;padding:9px 10px max(9px,env(safe-area-inset-bottom));background:#fff;box-shadow:0 -2px 14px #0002}#mobileDock>*{flex:1;font-size:13px;padding:12px 6px}#maptip{top:9px;right:9px;max-width:165px;padding:6px;font-size:11px}#mapCount{bottom:77px;left:8px}#reviewPanel{top:auto;bottom:75px;padding:10px;width:calc(100% - 16px)}#reviewPanel button{padding:10px 7px;font-size:12px}#candidates{max-height:none}}
+@media(max-width:760px){html,body{height:100%;overflow:hidden}header{height:54px;padding:10px 13px}header b{font-size:17px}header>small{display:none}main{display:block;height:calc(100dvh - 54px)}#map{height:100%;min-height:0}aside{position:fixed;z-index:1200;left:0;right:0;bottom:0;max-height:80dvh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 25px #0003;transform:translateY(110%);transition:transform .2s;padding:12px 18px 90px}body.toolsOpen aside{transform:translateY(0)}#mobileScrim{position:fixed;inset:54px 0 0;background:#0006;z-index:1100}body.toolsOpen #mobileScrim{display:block}#mobileDock{display:flex;position:fixed;z-index:1050;bottom:0;left:0;right:0;gap:7px;padding:9px 10px max(9px,env(safe-area-inset-bottom));background:#fff;box-shadow:0 -2px 14px #0002}#mobileDock>*{flex:1;font-size:13px;padding:12px 6px}#maptip{top:9px;right:9px;max-width:195px;padding:6px;font-size:11px}#mapCount{bottom:77px;left:8px}#reviewPanel{top:auto;bottom:75px;padding:10px;width:calc(100% - 16px)}#reviewPanel button{padding:10px 7px;font-size:12px}#candidates{max-height:none}}
 </style></head>
-<body><header><b>✂ GPX Cleaner <small>1.0.6.1</small></b><small>Importer · Nettoyer · Exporter</small></header>
+<body><header><b>✂ GPX Cleaner <small>1.0.7</small></b><small>Importer · Nettoyer · Exporter</small></header>
 <div id="mobileScrim"></div><nav id="mobileDock"><label class="upload" for="file">＋ Importer</label><button class="secondary" id="mobileTools">☰ Outils</button><button id="mobileExport">↓ Exporter</button></nav><main><aside>
 <section class="step"><h2>1. Importer une trace</h2>
 <label class="upload">📁 Choisir un GPX ou un export OsmAnd (.OSF)<input id="file" type="file" accept=".gpx,.osf" multiple></label>
@@ -58,7 +58,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 <div class="reviewProgress"><div id="reviewBar"></div></div>
 <div class="reviewActions"><button id="reviewPrev" class="secondary">← Précédent</button><button id="reviewKeep" class="secondary">✓ Laisser</button><button id="reviewExclude">✂ Écarter</button></div>
 <div class="row" style="margin-top:8px"><button id="reviewNext" class="secondary">Suivant →</button><button id="reviewFinish" class="secondary">Terminer</button></div>
-</div><div id="mapCount">0 point affiché</div><div id="maptip"><b>Fond de carte</b><select id="basemap"><option value="poi">Plan avec POI (OpenFreeMap Bright)</option><option value="plan">Plan (OpenFreeMap)</option><option value="esri">Satellite (Esri)</option></select><label id="labelsRow" style="display:none"><input id="labelsToggle" type="checkbox" checked> Noms et routes</label><span id="tileStatus">Chargement…</span></div></div></main>
+</div><div id="mapCount">0 point affiché</div><div id="maptip"><b>Fond de carte</b><select id="basemap"><option value="poi">Plan avec POI (OpenStreetMap)</option><option value="plan">Plan vectoriel (OpenFreeMap)</option><option value="maptiler">Satellite HD (MapTiler)</option><option value="esri">Satellite de secours (Esri)</option></select><label id="labelsRow" style="display:none"><input id="labelsToggle" type="checkbox" checked> Noms et routes</label><div id="maptilerSettings" style="display:none;margin-top:7px"><label for="maptilerKey" style="display:block;margin-bottom:3px">Clé MapTiler Free</label><input id="maptilerKey" type="password" autocomplete="off" placeholder="Coller la clé API" style="width:100%;padding:7px;border:1px solid #cbdadd;border-radius:6px;font-size:12px"><button id="saveMaptiler" type="button" style="padding:7px;margin-top:5px;width:100%;font-size:12px">Activer le satellite</button><small style="display:block;margin-top:4px;color:#60747c">Clé conservée dans ce navigateur. Ne pas activer une offre payante.</small></div><span id="tileStatus">Chargement…</span></div></div></main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>if(!window.L)document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');</script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -73,39 +73,56 @@ const map=L.map('map').setView([32.3,-4.7],6), layer=L.layerGroup().addTo(map);
 const SAT='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const LABELS='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
 let baseLayer=null,labelLayer=null,baseChoice='poi',tileErrors=0,tileLoaded=false;
+const OSM='https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const MT='https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=';
+const getMTKey=()=>{try{return localStorage.getItem('gpxcleaner_maptiler_key')||''}catch(e){return ''}};
 function clearMapBase(){if(baseLayer){map.removeLayer(baseLayer);baseLayer=null}if(labelLayer){map.removeLayer(labelLayer);labelLayer=null}}
 function setLabels(){
  if(labelLayer){map.removeLayer(labelLayer);labelLayer=null}
  if(baseChoice==='esri'&&$('labelsToggle').checked){
   labelLayer=L.tileLayer(LABELS,{maxZoom:22,maxNativeZoom:19,opacity:1,attribution:'Labels © Esri'}).addTo(map);
-  labelLayer.on('tileerror',()=>{$('tileStatus').textContent='Satellite chargé · certaines étiquettes indisponibles à ce zoom'});
  }
+}
+function rasterLayer(url,attr,nativeZoom){
+ const l=L.tileLayer(url,{maxZoom:22,maxNativeZoom:nativeZoom,attribution:attr,crossOrigin:false});
+ l.on('tileload',()=>{if(baseLayer===l){tileLoaded=true;$('tileStatus').textContent='Carte chargée ✓'}});
+ l.on('tileerror',()=>{if(baseLayer!==l)return;tileErrors++;if(tileErrors>=4&&!tileLoaded){$('tileStatus').textContent=baseChoice==='maptiler'?'Satellite indisponible : vérifie la clé, le quota et le domaine autorisé.':'Certaines tuiles ne sont pas disponibles à ce zoom.'}});
+ return l;
 }
 function useBase(key){
  baseChoice=key;tileErrors=0;tileLoaded=false;clearMapBase();
- $('basemap').value=key;$('labelsRow').style.display=key==='esri'?'flex':'none';
+ $('basemap').value=key;
+ $('labelsRow').style.display=key==='esri'?'flex':'none';
+ $('maptilerSettings').style.display=key==='maptiler'?'block':'none';
  $('tileStatus').textContent='Chargement de la carte…';
- if(key==='poi'||key==='plan'){
+ if(key==='poi'){
+  // OpenStreetMap raster displays native POI labels; use modest traffic only, respecting tile usage policy.
+  baseLayer=rasterLayer(OSM,'© OpenStreetMap contributors',19).addTo(map);
+ }else if(key==='plan'){
   if(typeof L.maplibreGL!=='function'){
-   $('tileStatus').textContent='Plan indisponible (bibliothèque MapLibre bloquée). Passage au satellite.';
-   useBase('esri');return;
+   $('tileStatus').textContent='Carte vectorielle indisponible : retour au plan avec POI.';
+   useBase('poi');return;
   }
-  const style=key==='poi'?'bright':'liberty';
   try{
-   baseLayer=L.maplibreGL({style:'https://tiles.openfreemap.org/styles/'+style,interactive:false,attribution:'© OpenFreeMap · © OpenStreetMap contributors'}).addTo(map);
+   baseLayer=L.maplibreGL({style:'https://tiles.openfreemap.org/styles/liberty',interactive:false,attribution:'© OpenFreeMap · © OpenStreetMap contributors'}).addTo(map);
    const gl=baseLayer.getMaplibreMap?.();
-   if(gl){
-    gl.on('load',()=>{$('tileStatus').textContent=key==='poi'?'Plan avec POI chargé ✓':'Plan chargé ✓'});
-    gl.on('error',()=>{tileErrors++;if(tileErrors>=3&&baseChoice===key){$('tileStatus').textContent='Fond inaccessible, changement de carte…';useBase(key==='poi'?'plan':'esri')}});
-   }
-  }catch(e){useBase(key==='poi'?'plan':'esri')}
+   if(gl){gl.on('load',()=>{$('tileStatus').textContent='Plan vectoriel chargé ✓'});gl.on('error',()=>{tileErrors++;if(tileErrors>=5&&baseChoice==='plan')useBase('poi')})}
+  }catch(e){useBase('poi')}
+ }else if(key==='maptiler'){
+  const k=getMTKey();
+  if(!k){$('tileStatus').textContent='Entre ta clé MapTiler Free pour activer le satellite HD.';return}
+  baseLayer=rasterLayer(MT+encodeURIComponent(k),'© MapTiler · © OpenStreetMap contributors',20).addTo(map);
  }else{
-  baseLayer=L.tileLayer(SAT,{maxZoom:22,maxNativeZoom:17,attribution:'Imagerie © Esri'});
-  baseLayer.on('tileload',()=>{tileLoaded=true;$('tileStatus').textContent='Satellite chargé ✓'});
-  baseLayer.on('tileerror',()=>{tileErrors++;if(tileErrors>=4&&!tileLoaded)$('tileStatus').textContent='Imagerie indisponible ici. Essaie un zoom moins fort.'});
-  baseLayer.addTo(map);setLabels();
+  baseLayer=rasterLayer(SAT,'Imagerie © Esri',17).addTo(map);setLabels();
  }
 }
+$('maptilerKey').value=getMTKey();
+$('saveMaptiler').onclick=()=>{
+ const k=$('maptilerKey').value.trim();
+ if(!k){$('tileStatus').textContent='Clé manquante.';return}
+ try{localStorage.setItem('gpxcleaner_maptiler_key',k)}catch(e){$('tileStatus').textContent='Stockage local bloqué : clé non enregistrée.';return}
+ useBase('maptiler');
+};
 $('basemap').onchange=e=>useBase(e.target.value);
 $('labelsToggle').onchange=setLabels;
 useBase('poi');
@@ -324,7 +341,7 @@ $('export').onclick=()=>{
  if(!tracks.length)return;
  const pending=proposals.filter(p=>!p.reviewed).length;
  if(pending&&!confirm(`${pending} détour(s) n'ont pas encore été examinés. Exporter quand même ?`))return;
- const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.6.1" xmlns="http://www.topografix.com/GPX/1/1">'+
+ const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.7" xmlns="http://www.topografix.com/GPX/1/1">'+
  tracks.map((t,i)=>{const pts=filtered(i);const segs=[];let group=[];for(const p of pts){if(group.length&&p.seg!==group[0].seg){segs.push(group);group=[]}group.push(p)}if(group.length)segs.push(group);return '<trk><name>'+esc(t.name)+'</name>'+segs.map(seg=>'<trkseg>'+seg.map(exportPoint).join('')+'</trkseg>').join('')+'</trk>'}).join('')+'</gpx>';
  const url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'})),a=document.createElement('a');a.href=url;const typed=$('exportName').value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.+$/,'');a.download=(typed||'GPX_Cleaner_nettoye').replace(/\.gpx$/i,'')+'.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };
