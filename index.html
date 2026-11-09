@@ -1,6 +1,13 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GPX Cleaner — Nettoyer une trace en 2 minutes</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#123642">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="GPX Cleaner">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
@@ -92,7 +99,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 }
 @media(min-width:761px){#maptip{min-width:170px}}
 </style></head>
-<body><header><b>✂ GPX Cleaner <small>1.0.9</small></b><small>Importer · Nettoyer · Exporter</small></header>
+<body><header><b>✂ GPX Cleaner <small>1.0.11</small></b><small>Importer · Nettoyer · Exporter</small></header>
 <div id="mobileScrim"></div><nav id="mobileDock"><label class="upload" for="file">＋ Importer</label><button class="secondary" id="mobileTools">☰ Outils</button><button id="mobileExport">↓ Exporter</button></nav><main><aside><div id="mobileSheetHead"><span class="sheetHandle"></span><div class="sheetHeadRow"><strong>Mes outils</strong><button id="mobileClose" type="button" class="secondary" aria-label="Fermer les outils">✕</button></div><p>Choisis une action pour travailler sur ta trace.</p></div>
 <section class="step"><h2>1. Importer une trace</h2>
 <label class="upload">📁 Choisir un GPX ou un export OsmAnd (.OSF)<input id="file" type="file" accept=".gpx,.osf" multiple></label>
@@ -405,7 +412,7 @@ $('export').onclick=()=>{
  if(!tracks.length)return;
  const pending=proposals.filter(p=>!p.reviewed).length;
  if(pending&&!confirm(`${pending} détour(s) n'ont pas encore été examinés. Exporter quand même ?`))return;
- const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.8" xmlns="http://www.topografix.com/GPX/1/1">'+
+ const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.11" xmlns="http://www.topografix.com/GPX/1/1">'+
  tracks.map((t,i)=>{const pts=filtered(i);const segs=[];let group=[];for(const p of pts){if(group.length&&p.seg!==group[0].seg){segs.push(group);group=[]}group.push(p)}if(group.length)segs.push(group);return '<trk><name>'+esc(t.name)+'</name>'+segs.map(seg=>'<trkseg>'+seg.map(exportPoint).join('')+'</trkseg>').join('')+'</trk>'}).join('')+'</gpx>';
  const url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'})),a=document.createElement('a');a.href=url;const typed=$('exportName').value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.+$/,'');a.download=(typed||'GPX_Cleaner_nettoye').replace(/\.gpx$/i,'')+'.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };
@@ -447,4 +454,12 @@ draw();restoreSession();
  $('stopListDetails').open=!mobile();
  window.addEventListener('resize',()=>{if(!mobile())$('stopListDetails').open=true;});
 })();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js', {scope:'./'})
+      .catch(err => console.warn('PWA : cache hors connexion indisponible', err));
+  });
+}
 </script></body></html>
