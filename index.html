@@ -99,10 +99,11 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 }
 @media(min-width:761px){#maptip{min-width:170px}}
 </style></head>
-<body><header><b>✂ GPX Cleaner <small>1.0.11</small></b><small>Importer · Nettoyer · Exporter</small></header>
+<body><header><b>✂ GPX Cleaner <small>1.0.12</small></b><small>Importer · Nettoyer · Exporter</small></header>
 <div id="mobileScrim"></div><nav id="mobileDock"><label class="upload" for="file">＋ Importer</label><button class="secondary" id="mobileTools">☰ Outils</button><button id="mobileExport">↓ Exporter</button></nav><main><aside><div id="mobileSheetHead"><span class="sheetHandle"></span><div class="sheetHeadRow"><strong>Mes outils</strong><button id="mobileClose" type="button" class="secondary" aria-label="Fermer les outils">✕</button></div><p>Choisis une action pour travailler sur ta trace.</p></div>
-<section class="step"><h2>1. Importer une trace</h2>
-<label class="upload">📁 Choisir un GPX ou un export OsmAnd (.OSF)<input id="file" type="file" accept=".gpx,.osf" multiple></label>
+<section class="step"><h2>1. Importer une ou plusieurs traces</h2>
+<label class="upload">📁 Choisir un ou plusieurs fichiers GPX / OSF<input id="file" type="file" accept=".gpx,.osf" multiple></label>
+<p class="muted">Tu peux sélectionner plusieurs traces en une seule fois : chacune aura sa propre couleur sur la carte.</p>
 <p id="status" class="muted">Les fichiers sont traités dans ton navigateur. Rien n'est envoyé sur Internet.</p>
 <div class="stats"><div><span class="muted">Traces</span><b id="count">0</b></div><div><span class="muted">Distance</span><b id="distance">0 km</b></div></div>
 <label class="muted" for="day">Afficher sur la carte</label><select id="day"><option value="all">Toutes les traces</option></select>
@@ -356,7 +357,7 @@ function reviewDecision(accepted){
  const p=proposals[reviewIndex];if(accepted&&!p.accepted&&!confirmStopRemoval(p))return;p.accepted=accepted;p.reviewed=true;
  draw();scheduleSave();reviewIndex++;renderReview();
 }
-$('reviewAll').onclick=()=>{if(proposals.length){reviewIndex=0;renderReview()}};
+$('reviewAll').onclick=()=>{if(proposals.length){document.body.classList.remove('toolsOpen');reviewIndex=0;renderReview()}};
 $('reviewKeep').onclick=()=>reviewDecision(false);
 $('reviewExclude').onclick=()=>reviewDecision(true);
 $('reviewPrev').onclick=()=>{if(reviewIndex>0){reviewIndex--;renderReview()}};
@@ -412,7 +413,7 @@ $('export').onclick=()=>{
  if(!tracks.length)return;
  const pending=proposals.filter(p=>!p.reviewed).length;
  if(pending&&!confirm(`${pending} détour(s) n'ont pas encore été examinés. Exporter quand même ?`))return;
- const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.11" xmlns="http://www.topografix.com/GPX/1/1">'+
+ const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.12" xmlns="http://www.topografix.com/GPX/1/1">'+
  tracks.map((t,i)=>{const pts=filtered(i);const segs=[];let group=[];for(const p of pts){if(group.length&&p.seg!==group[0].seg){segs.push(group);group=[]}group.push(p)}if(group.length)segs.push(group);return '<trk><name>'+esc(t.name)+'</name>'+segs.map(seg=>'<trkseg>'+seg.map(exportPoint).join('')+'</trkseg>').join('')+'</trk>'}).join('')+'</gpx>';
  const url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'})),a=document.createElement('a');a.href=url;const typed=$('exportName').value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.+$/,'');a.download=(typed||'GPX_Cleaner_nettoye').replace(/\.gpx$/i,'')+'.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };

@@ -1,9 +1,7 @@
-GPX Cleaner 1.0.11 — PWA
+GPX Cleaner 1.0.12 PWA
 
-Décompresse ce ZIP et dépose TOUS les fichiers à la racine du dépôt GitHub Pages gpx-cleaner, en remplaçant index.html.
+Décompressez puis publiez TOUS les fichiers à la racine du dépôt GitHub Pages, en remplaçant les anciens.
 
-Ouvre https://sudcomconseil.github.io/gpx-cleaner/ sur Android (Chrome : Installer l’application ou Ajouter à l’écran d’accueil) ou iPhone (Safari : Partager > Sur l’écran d’accueil).
+Corrections : le bouton Tout réviser ferme automatiquement le panneau Outils sur mobile ; l’import multiple de GPX/OSF est clairement indiqué.
 
-Important : la première visite nécessite Internet ; pour utiliser le nettoyage GPX hors ligne, ouvre une fois l’application en ligne pour mettre les bibliothèques JS en cache. Les cartes et les tuiles satellite nécessitent Internet. Une mise à jour peut nécessiter de fermer et rouvrir l’application.
-
-La clé publique MapTiler est conservée telle qu’elle figure dans le fichier fourni. Vérifie les restrictions de domaine et ton quota gratuit.
+Pour récupérer la nouvelle version sur un téléphone où la PWA est installée : ouvrez-la avec une connexion Internet, puis fermez-la et relancez-la. Une actualisation peut être nécessaire.

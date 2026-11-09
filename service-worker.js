@@ -1,6 +1,6 @@
-/* GPX Cleaner PWA 1.0.11 — cache uniquement les ressources de l'application.
+/* GPX Cleaner PWA 1.0.12 — cache uniquement les ressources de l'application.
    Les traces GPX et les données IndexedDB ne sont jamais mises en cache ici. */
-const CACHE = 'gpx-cleaner-shell-v1-0-11';
+const CACHE = 'gpx-cleaner-shell-v1-0-12';
 const APP_SHELL = ['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 const LIBRARY_HOSTS = new Set(['unpkg.com','cdnjs.cloudflare.com']);
 const LIBRARIES = [
