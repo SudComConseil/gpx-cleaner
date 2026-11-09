@@ -58,7 +58,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 <div class="reviewProgress"><div id="reviewBar"></div></div>
 <div class="reviewActions"><button id="reviewPrev" class="secondary">← Précédent</button><button id="reviewKeep" class="secondary">✓ Laisser</button><button id="reviewExclude">✂ Écarter</button></div>
 <div class="row" style="margin-top:8px"><button id="reviewNext" class="secondary">Suivant →</button><button id="reviewFinish" class="secondary">Terminer</button></div>
-</div><div id="mapCount">0 point affiché</div><div id="maptip"><b>Fond de carte</b><select id="basemap"><option value="poi">Plan avec POI (OpenStreetMap)</option><option value="plan">Plan vectoriel (OpenFreeMap)</option><option value="maptiler">Satellite HD (MapTiler)</option><option value="esri">Satellite de secours (Esri)</option></select><label id="labelsRow" style="display:none"><input id="labelsToggle" type="checkbox" checked> Noms et routes</label><div id="maptilerSettings" style="display:none;margin-top:7px"><label for="maptilerKey" style="display:block;margin-bottom:3px">Clé MapTiler Free</label><input id="maptilerKey" type="password" autocomplete="off" placeholder="Coller la clé API" style="width:100%;padding:7px;border:1px solid #cbdadd;border-radius:6px;font-size:12px"><button id="saveMaptiler" type="button" style="padding:7px;margin-top:5px;width:100%;font-size:12px">Activer le satellite</button><small style="display:block;margin-top:4px;color:#60747c">Clé conservée dans ce navigateur. Ne pas activer une offre payante.</small></div><span id="tileStatus">Chargement…</span></div></div></main>
+</div><div id="mapCount">0 point affiché</div><div id="maptip"><b>Fond de carte</b><select id="basemap"><option value="poi">Plan avec POI (OpenStreetMap)</option><option value="plan">Plan vectoriel (OpenFreeMap)</option><option value="maptiler">Satellite HD (MapTiler)</option><option value="esri">Satellite de secours (Esri)</option></select><label id="labelsRow" style="display:none"><input id="labelsToggle" type="checkbox" checked> Noms et frontières</label><div id="maptilerSettings" style="display:none;margin-top:7px"><label for="maptilerKey" style="display:block;margin-bottom:3px">Clé MapTiler (facultatif)</label><input id="maptilerKey" type="password" autocomplete="off" placeholder="Coller la clé API" style="width:100%;padding:7px;border:1px solid #cbdadd;border-radius:6px;font-size:12px"><button id="saveMaptiler" type="button" style="padding:7px;margin-top:5px;width:100%;font-size:12px">Activer le satellite</button><small style="display:block;margin-top:4px;color:#60747c">Clé publique intégrée. Une autre clé peut être enregistrée sur cet appareil.</small></div><span id="tileStatus">Chargement…</span></div></div></main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>if(!window.L)document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');</script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -75,11 +75,12 @@ const LABELS='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/Wor
 let baseLayer=null,labelLayer=null,baseChoice='poi',tileErrors=0,tileLoaded=false;
 const OSM='https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const MT='https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=';
-const getMTKey=()=>{try{return localStorage.getItem('gpxcleaner_maptiler_key')||''}catch(e){return ''}};
+const DEFAULT_MAPTILER_KEY='3RbCiXQiDhOJ0LN40tYW'; // Clé publique limitée au domaine GitHub Pages dans MapTiler
+const getMTKey=()=>{try{return localStorage.getItem('gpxcleaner_maptiler_key')||DEFAULT_MAPTILER_KEY}catch(e){return DEFAULT_MAPTILER_KEY}};
 function clearMapBase(){if(baseLayer){map.removeLayer(baseLayer);baseLayer=null}if(labelLayer){map.removeLayer(labelLayer);labelLayer=null}}
 function setLabels(){
  if(labelLayer){map.removeLayer(labelLayer);labelLayer=null}
- if(baseChoice==='esri'&&$('labelsToggle').checked){
+ if((baseChoice==='esri'||baseChoice==='maptiler')&&$('labelsToggle').checked){
   labelLayer=L.tileLayer(LABELS,{maxZoom:22,maxNativeZoom:19,opacity:1,attribution:'Labels © Esri'}).addTo(map);
  }
 }
@@ -92,7 +93,7 @@ function rasterLayer(url,attr,nativeZoom){
 function useBase(key){
  baseChoice=key;tileErrors=0;tileLoaded=false;clearMapBase();
  $('basemap').value=key;
- $('labelsRow').style.display=key==='esri'?'flex':'none';
+ $('labelsRow').style.display=(key==='esri'||key==='maptiler')?'flex':'none';
  $('maptilerSettings').style.display=key==='maptiler'?'block':'none';
  $('tileStatus').textContent='Chargement de la carte…';
  if(key==='poi'){
@@ -110,13 +111,14 @@ function useBase(key){
   }catch(e){useBase('poi')}
  }else if(key==='maptiler'){
   const k=getMTKey();
-  if(!k){$('tileStatus').textContent='Entre ta clé MapTiler Free pour activer le satellite HD.';return}
-  baseLayer=rasterLayer(MT+encodeURIComponent(k),'© MapTiler · © OpenStreetMap contributors',20).addTo(map);
+  if(!k){$('tileStatus').textContent='Clé MapTiler manquante.';return}
+  baseLayer=rasterLayer(MT+encodeURIComponent(k),'© MapTiler · © OpenStreetMap contributors',20).addTo(map);setLabels();
  }else{
   baseLayer=rasterLayer(SAT,'Imagerie © Esri',17).addTo(map);setLabels();
  }
 }
-$('maptilerKey').value=getMTKey();
+$('maptilerKey').value='';
+$('maptilerKey').placeholder='Clé intégrée — remplacement facultatif';
 $('saveMaptiler').onclick=()=>{
  const k=$('maptilerKey').value.trim();
  if(!k){$('tileStatus').textContent='Clé manquante.';return}
@@ -341,7 +343,7 @@ $('export').onclick=()=>{
  if(!tracks.length)return;
  const pending=proposals.filter(p=>!p.reviewed).length;
  if(pending&&!confirm(`${pending} détour(s) n'ont pas encore été examinés. Exporter quand même ?`))return;
- const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.7" xmlns="http://www.topografix.com/GPX/1/1">'+
+ const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.8" xmlns="http://www.topografix.com/GPX/1/1">'+
  tracks.map((t,i)=>{const pts=filtered(i);const segs=[];let group=[];for(const p of pts){if(group.length&&p.seg!==group[0].seg){segs.push(group);group=[]}group.push(p)}if(group.length)segs.push(group);return '<trk><name>'+esc(t.name)+'</name>'+segs.map(seg=>'<trkseg>'+seg.map(exportPoint).join('')+'</trkseg>').join('')+'</trk>'}).join('')+'</gpx>';
  const url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'})),a=document.createElement('a');a.href=url;const typed=$('exportName').value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.+$/,'');a.download=(typed||'GPX_Cleaner_nettoye').replace(/\.gpx$/i,'')+'.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };
