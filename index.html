@@ -86,7 +86,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
  aside .step.mobileExpanded #reviewAll{display:block!important}
  aside .step.mobileExpanded #reviewAll[style*="display: none"]{display:none!important}
  aside .step.mobileExpanded label.upload{display:block!important}
- aside .step.mobileExpanded #showStops{display:inline!important}
+ aside .step.mobileExpanded #showStops{display:none!important}
  aside .step.mobileExpanded #exportName{display:block!important}
  aside .step.mobileExpanded button[style*="display: none"]{display:none!important}
  #mobileDock{padding:8px 10px max(9px,env(safe-area-inset-bottom));gap:7px}
@@ -98,15 +98,28 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
  body.toolsOpen #mapOptions{pointer-events:auto}
 }
 @media(min-width:761px){#maptip{min-width:170px}}
+
+/* 1.0.13 — commandes mobiles simplifiées */
+#dayPicker{display:block}
+@media(max-width:760px){
+ #mobileDock{justify-content:space-between}
+ #mobileDock #mobileTools{flex:0 0 44%;}
+ #mobileDock #mobileCompare{flex:1}
+ #dayPicker{margin-top:10px}
+ #viewStops,#toggleStops{font-size:12px;padding:10px 8px}
+ #stopListDetails{margin-top:4px}
+ #stopListDetails>summary{display:none!important}
+ aside .step.mobileExpanded #stopListDetails>summary{display:none!important}
+}
 </style></head>
-<body><header><b>✂ GPX Cleaner <small>1.0.12</small></b><small>Importer · Nettoyer · Exporter</small></header>
-<div id="mobileScrim"></div><nav id="mobileDock"><label class="upload" for="file">＋ Importer</label><button class="secondary" id="mobileTools">☰ Outils</button><button id="mobileExport">↓ Exporter</button></nav><main><aside><div id="mobileSheetHead"><span class="sheetHandle"></span><div class="sheetHeadRow"><strong>Mes outils</strong><button id="mobileClose" type="button" class="secondary" aria-label="Fermer les outils">✕</button></div><p>Choisis une action pour travailler sur ta trace.</p></div>
+<body><header><b>✂ GPX Cleaner <small>1.0.13</small></b><small>Importer · Nettoyer · Exporter</small></header>
+<div id="mobileScrim"></div><nav id="mobileDock"><button class="secondary" id="mobileTools">☰ Outils</button><button class="secondary" id="mobileCompare" type="button" style="display:none">⇄ Voir avant</button></nav><main><aside><div id="mobileSheetHead"><span class="sheetHandle"></span><div class="sheetHeadRow"><strong>Mes outils</strong><button id="mobileClose" type="button" class="secondary" aria-label="Fermer les outils">✕</button></div><p>Choisis une action pour travailler sur ta trace.</p></div>
 <section class="step"><h2>1. Importer une ou plusieurs traces</h2>
 <label class="upload">📁 Choisir un ou plusieurs fichiers GPX / OSF<input id="file" type="file" accept=".gpx,.osf" multiple></label>
 <p class="muted">Tu peux sélectionner plusieurs traces en une seule fois : chacune aura sa propre couleur sur la carte.</p>
 <p id="status" class="muted">Les fichiers sont traités dans ton navigateur. Rien n'est envoyé sur Internet.</p>
 <div class="stats"><div><span class="muted">Traces</span><b id="count">0</b></div><div><span class="muted">Distance</span><b id="distance">0 km</b></div></div>
-<label class="muted" for="day">Afficher sur la carte</label><select id="day"><option value="all">Toutes les traces</option></select>
+<div id="dayPicker"><label class="muted" for="day">Afficher sur la carte</label><select id="day"><option value="all">Toutes les traces</option></select></div>
 <details><summary>Couleurs des traces</summary><div id="legend" class="legend"></div></details>
 </section>
 <section class="step"><h2>2. Nettoyer les allers-retours</h2>
@@ -115,7 +128,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 <button id="reviewAll" class="secondary" style="width:100%;display:none">▶ Tout réviser</button><div id="candidates"></div>
 <div class="row"><button id="undo" class="secondary" disabled>↶ Annuler</button><button id="reset" class="secondary" disabled>Tout rétablir</button></div>
 </section>
-<section class="step"><h2>3. Arrêts et nuits</h2><p class="muted">Détection automatique si le GPX contient des horaires. Une nuit est estimée et peut être corrigée.</p><div class="row"><button id="stopsRefresh" class="secondary">↻ Recalculer</button><label class="muted" style="align-self:center"><input type="checkbox" id="showStops" checked> Afficher sur carte</label></div><p class="muted" id="stopsStatus">Aucune trace chargée.</p><details id="stopListDetails"><summary id="stopListSummary">Détail des arrêts</summary><div id="stopList"></div></details></section><section class="step"><h2>4. Exporter</h2><p class="muted" id="cleanStats">Aucun détour supprimé.</p><button id="compare" class="secondary" style="width:100%;margin-bottom:10px" disabled>Afficher : trace nettoyée</button><p class="muted" id="saveStatus">Sauvegarde locale disponible.</p>
+<section class="step"><h2>3. Arrêts et nuits</h2><p class="muted">Détection automatique si le GPX contient des horaires. Une nuit est estimée et peut être corrigée.</p><div class="row"><button id="toggleStops" class="secondary" type="button">Masquer les arrêts</button><button id="viewStops" class="secondary" type="button">Voir la liste</button><input type="checkbox" id="showStops" checked hidden></div><p class="muted" id="stopsStatus">Aucune trace chargée.</p><details id="stopListDetails"><summary id="stopListSummary">Détail des arrêts</summary><div id="stopList"></div></details></section><section class="step"><h2>4. Exporter</h2><p class="muted" id="cleanStats">Aucun détour supprimé.</p><button id="compare" class="secondary" style="width:100%;margin-bottom:10px" disabled>Afficher : trace nettoyée</button><p class="muted" id="saveStatus">Sauvegarde locale disponible.</p>
 <p class="muted">Vérifie les détours écartés sur la carte avant d'exporter. Les portions supprimées sont raccordées directement : cela ne garantit pas l'existence d'un chemin praticable.</p>
 <label class="muted" for="exportName">Nom du fichier exporté</label><input id="exportName" type="text" value="GPX_Cleaner_nettoye.gpx" spellcheck="false" aria-label="Nom du GPX exporté" style="width:100%;padding:11px;border:1px solid #cbdadd;border-radius:8px;margin:6px 0 12px;font:inherit"/><button id="export" style="width:100%" disabled>⬇ Télécharger le GPX nettoyé</button>
 </section>
@@ -328,7 +341,7 @@ function draw(){
  $('candidates').querySelectorAll('[data-zoom]').forEach(el=>el.onclick=()=>zoomProposal(+el.dataset.zoom));
  $('candidates').querySelectorAll('[data-toggle]').forEach(el=>el.onclick=()=>toggleProposal(+el.dataset.toggle));
  $('reviewAll').style.display=proposals.length?'block':'none';$('reviewAll').textContent=`▶ Tout réviser (${proposals.length})`;
- $('detect').disabled=!tracks.length||busy;$('export').disabled=!tracks.length;$('undo').disabled=!history.length;$('reset').disabled=!accepted;
+ $('detect').disabled=!tracks.length||busy;$('export').disabled=!tracks.length;$('undo').disabled=!history.length;$('reset').disabled=!accepted;updateMobileControls();
 }
 function toggleProposal(i){if(!proposals[i].accepted&&!confirmStopRemoval(proposals[i]))return;history.push(proposals.map(p=>({accepted:p.accepted,reviewed:p.reviewed})));proposals[i].accepted=!proposals[i].accepted;proposals[i].reviewed=true;draw();scheduleSave();if(reviewIndex>=0)renderReview()}
 function zoomProposal(i){const c=proposals[i],pts=tracks[c.ti].pts.slice(c.start,c.end+1);map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lon])),{padding:[35,35]});fitNext=false}
@@ -400,10 +413,22 @@ function setStopKind(i){if(!stops[i])return;setStopType(i,stops[i].kind==='night
 function drawStops(){stopLayer.clearLayers();if(!$('showStops').checked)return;const selected=$('day').value;
  stops.forEach((st,i)=>{if(st.hidden)return;if(selected!=='all'&&+selected!==st.ti)return;const type=stopType(st);L.marker([st.lat,st.lon],{icon:L.divIcon({className:'',html:pinSVG(st),iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-34]})}).addTo(stopLayer).bindPopup(`<b>${esc(type.label)}</b><br>Durée : ${durationText(st.mins)}<br><label>Catégorie <select id="popupStopType" aria-label="Catégorie de l'arrêt">${typeOptions(st)}</select></label><br><button id="popupHideStop" type="button" style="margin-top:8px">Masquer cet arrêt</button>`).on('popupopen',()=>{const sel=document.getElementById('popupStopType');if(sel)sel.onchange=()=>{setStopType(i,sel.value);map.closePopup()};const hide=document.getElementById('popupHideStop');if(hide)hide.onclick=()=>{setStopHidden(i,true);map.closePopup()}})});
 }
-$('stopsRefresh').onclick=()=>{detectStops();draw();scheduleSave()};$('showStops').onchange=drawStops;
-$('compare').onclick=()=>{comparison=!comparison;draw();scheduleSave()};
+$('toggleStops').onclick=()=>{$('showStops').checked=!$('showStops').checked;drawStops();updateMobileControls()};
+$('viewStops').onclick=()=>{$('stopListDetails').open=!$('stopListDetails').open;updateMobileControls()};
+$('showStops').onchange=drawStops;
+function toggleComparison(){if(!tracks.length)return;comparison=!comparison;draw();scheduleSave();document.body.classList.remove('toolsOpen')}
+ $('compare').onclick=toggleComparison;
+ $('mobileCompare').onclick=toggleComparison;
+ function updateMobileControls(){
+  $('mobileCompare').style.display=tracks.length?'block':'none';
+  $('mobileCompare').textContent=comparison?'⇄ Voir après':'⇄ Voir avant';
+  $('dayPicker').style.display=tracks.length>1?'block':'none';
+  $('toggleStops').textContent=$('showStops').checked?'Masquer les arrêts':'Afficher les arrêts';
+  $('viewStops').textContent=$('stopListDetails').open?'Masquer la liste':'Voir la liste';
+ }
+ $('stopListDetails').addEventListener('toggle',updateMobileControls);
 $('mobileTools').onclick=()=>document.body.classList.toggle('toolsOpen');$('mobileScrim').onclick=()=>document.body.classList.remove('toolsOpen');
-$('mobileExport').onclick=()=>$('export').click();
+
 function scheduleSave(){if(restoring)return;clearTimeout(saveTimer);$('saveStatus').textContent='Sauvegarde locale en cours…';saveTimer=setTimeout(async()=>{try{const db=await openDB();await new Promise((resolve,reject)=>{const tx=db.transaction('session','readwrite');tx.objectStore('session').put({tracks,proposals,stops,comparison,exportName:$('exportName').value,day:$('day').value,savedAt:Date.now()},'current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});$('saveStatus').textContent='✓ Travail sauvegardé sur cet appareil'}catch(e){$('saveStatus').textContent='⚠ Sauvegarde locale indisponible'}},650)}
 function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open('gpx-cleaner-v105',1);req.onupgradeneeded=()=>req.result.createObjectStore('session');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function restoreSession(){try{const db=await openDB();const saved=await new Promise((resolve,reject)=>{const req=db.transaction('session').objectStore('session').get('current');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});if(!saved?.tracks?.length||tracks.length)return;restoring=true;tracks=saved.tracks;proposals=saved.proposals||[];stops=(saved.stops||[]).map(st=>({...st,type:st.type||(st.kind==='night'?'bivouac':'other')}));comparison=!!saved.comparison;history=[];totalDistance=tracks.reduce((sum,t)=>sum+length(t.pts),0);$('exportName').value=saved.exportName||'GPX_Cleaner_nettoye.gpx';$('day').innerHTML='<option value="all">Toutes les traces</option>'+tracks.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join('');$('day').value=saved.day||'all';if($('day').selectedIndex<0)$('day').value='all';fitNext=true;renderStops();draw();$('status').textContent='Session précédente restaurée depuis cet appareil.';$('saveStatus').textContent='✓ Session restaurée'}catch(e){$('saveStatus').textContent='Sauvegarde locale non disponible'}finally{restoring=false}}
@@ -413,7 +438,7 @@ $('export').onclick=()=>{
  if(!tracks.length)return;
  const pending=proposals.filter(p=>!p.reviewed).length;
  if(pending&&!confirm(`${pending} détour(s) n'ont pas encore été examinés. Exporter quand même ?`))return;
- const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.12" xmlns="http://www.topografix.com/GPX/1/1">'+
+ const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.13" xmlns="http://www.topografix.com/GPX/1/1">'+
  tracks.map((t,i)=>{const pts=filtered(i);const segs=[];let group=[];for(const p of pts){if(group.length&&p.seg!==group[0].seg){segs.push(group);group=[]}group.push(p)}if(group.length)segs.push(group);return '<trk><name>'+esc(t.name)+'</name>'+segs.map(seg=>'<trkseg>'+seg.map(exportPoint).join('')+'</trkseg>').join('')+'</trk>'}).join('')+'</gpx>';
  const url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'})),a=document.createElement('a');a.href=url;const typed=$('exportName').value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.+$/,'');a.download=(typed||'GPX_Cleaner_nettoye').replace(/\.gpx$/i,'')+'.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };

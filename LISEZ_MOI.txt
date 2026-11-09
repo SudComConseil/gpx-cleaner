@@ -1,7 +1,4 @@
-GPX Cleaner 1.0.12 PWA
-
-Décompressez puis publiez TOUS les fichiers à la racine du dépôt GitHub Pages, en remplaçant les anciens.
-
-Corrections : le bouton Tout réviser ferme automatiquement le panneau Outils sur mobile ; l’import multiple de GPX/OSF est clairement indiqué.
-
-Pour récupérer la nouvelle version sur un téléphone où la PWA est installée : ouvrez-la avec une connexion Internet, puis fermez-la et relancez-la. Une actualisation peut être nécessaire.
+GPX Cleaner 1.0.13 PWA
+Déposer tous les fichiers de ce dossier à la racine du dépôt GitHub Pages.
+Sur mobile : barre Outils + comparaison avant/après, import/export dans Outils.
+Les données GPX restent locales.
