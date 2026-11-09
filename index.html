@@ -33,7 +33,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 #mapCount{position:absolute;z-index:510;bottom:12px;left:12px;background:#fffe;padding:5px 9px;border-radius:7px;font-size:11px;color:#405b65;pointer-events:none}#mobileDock,#mobileScrim{display:none}
 @media(max-width:760px){html,body{height:100%;overflow:hidden}header{height:54px;padding:10px 13px}header b{font-size:17px}header>small{display:none}main{display:block;height:calc(100dvh - 54px)}#map{height:100%;min-height:0}aside{position:fixed;z-index:1200;left:0;right:0;bottom:0;max-height:80dvh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 25px #0003;transform:translateY(110%);transition:transform .2s;padding:12px 18px 90px}body.toolsOpen aside{transform:translateY(0)}#mobileScrim{position:fixed;inset:54px 0 0;background:#0006;z-index:1100}body.toolsOpen #mobileScrim{display:block}#mobileDock{display:flex;position:fixed;z-index:1050;bottom:0;left:0;right:0;gap:7px;padding:9px 10px max(9px,env(safe-area-inset-bottom));background:#fff;box-shadow:0 -2px 14px #0002}#mobileDock>*{flex:1;font-size:13px;padding:12px 6px}#maptip{top:9px;right:9px;max-width:165px;padding:6px;font-size:11px}#mapCount{bottom:77px;left:8px}#reviewPanel{top:auto;bottom:75px;padding:10px;width:calc(100% - 16px)}#reviewPanel button{padding:10px 7px;font-size:12px}#candidates{max-height:none}}
 </style></head>
-<body><header><b>✂ GPX Cleaner <small>1.0.6</small></b><small>Importer · Nettoyer · Exporter</small></header>
+<body><header><b>✂ GPX Cleaner <small>1.0.6.1</small></b><small>Importer · Nettoyer · Exporter</small></header>
 <div id="mobileScrim"></div><nav id="mobileDock"><label class="upload" for="file">＋ Importer</label><button class="secondary" id="mobileTools">☰ Outils</button><button id="mobileExport">↓ Exporter</button></nav><main><aside>
 <section class="step"><h2>1. Importer une trace</h2>
 <label class="upload">📁 Choisir un GPX ou un export OsmAnd (.OSF)<input id="file" type="file" accept=".gpx,.osf" multiple></label>
@@ -58,7 +58,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 <div class="reviewProgress"><div id="reviewBar"></div></div>
 <div class="reviewActions"><button id="reviewPrev" class="secondary">← Précédent</button><button id="reviewKeep" class="secondary">✓ Laisser</button><button id="reviewExclude">✂ Écarter</button></div>
 <div class="row" style="margin-top:8px"><button id="reviewNext" class="secondary">Suivant →</button><button id="reviewFinish" class="secondary">Terminer</button></div>
-</div><div id="mapCount">0 point affiché</div><div id="maptip"><b>Fond de carte</b><select id="basemap"><option value="poi">Plan avec POI (Voyager)</option><option value="plan">Plan (OpenFreeMap)</option><option value="esri">Satellite (Esri)</option></select><label id="labelsRow" style="display:none"><input id="labelsToggle" type="checkbox" checked> Noms et routes</label><span id="tileStatus">Chargement…</span></div></div></main>
+</div><div id="mapCount">0 point affiché</div><div id="maptip"><b>Fond de carte</b><select id="basemap"><option value="poi">Plan avec POI (OpenFreeMap Bright)</option><option value="plan">Plan (OpenFreeMap)</option><option value="esri">Satellite (Esri)</option></select><label id="labelsRow" style="display:none"><input id="labelsToggle" type="checkbox" checked> Noms et routes</label><span id="tileStatus">Chargement…</span></div></div></main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>if(!window.L)document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');</script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -85,21 +85,20 @@ function useBase(key){
  baseChoice=key;tileErrors=0;tileLoaded=false;clearMapBase();
  $('basemap').value=key;$('labelsRow').style.display=key==='esri'?'flex':'none';
  $('tileStatus').textContent='Chargement de la carte…';
- if(key==='poi'){
-  baseLayer=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:22,maxNativeZoom:20,attribution:'© OpenStreetMap contributors · © CARTO'});
-  baseLayer.on('tileload',()=>{$('tileStatus').textContent='Plan et POI chargés ✓'});
-  baseLayer.on('tileerror',()=>{tileErrors++;if(tileErrors>=5&&!tileLoaded){$('tileStatus').textContent='Fond POI indisponible : essai OpenFreeMap';useBase('plan')}});
-  baseLayer.on('tileload',()=>{tileLoaded=true});baseLayer.addTo(map);
- }else if(key==='plan'){
+ if(key==='poi'||key==='plan'){
   if(typeof L.maplibreGL!=='function'){
    $('tileStatus').textContent='Plan indisponible (bibliothèque MapLibre bloquée). Passage au satellite.';
    useBase('esri');return;
   }
+  const style=key==='poi'?'bright':'liberty';
   try{
-   baseLayer=L.maplibreGL({style:'https://tiles.openfreemap.org/styles/liberty',interactive:false,attribution:'© OpenFreeMap · © OpenStreetMap contributors'}).addTo(map);
+   baseLayer=L.maplibreGL({style:'https://tiles.openfreemap.org/styles/'+style,interactive:false,attribution:'© OpenFreeMap · © OpenStreetMap contributors'}).addTo(map);
    const gl=baseLayer.getMaplibreMap?.();
-   if(gl){gl.on('load',()=>{$('tileStatus').textContent='Plan chargé ✓'});gl.on('error',()=>{tileErrors++;if(tileErrors>=3&&baseChoice==='plan'){$('tileStatus').textContent='Plan inaccessible. Passage au satellite.';useBase('esri')}})}
-  }catch(e){useBase('esri')}
+   if(gl){
+    gl.on('load',()=>{$('tileStatus').textContent=key==='poi'?'Plan avec POI chargé ✓':'Plan chargé ✓'});
+    gl.on('error',()=>{tileErrors++;if(tileErrors>=3&&baseChoice===key){$('tileStatus').textContent='Fond inaccessible, changement de carte…';useBase(key==='poi'?'plan':'esri')}});
+   }
+  }catch(e){useBase(key==='poi'?'plan':'esri')}
  }else{
   baseLayer=L.tileLayer(SAT,{maxZoom:22,maxNativeZoom:17,attribution:'Imagerie © Esri'});
   baseLayer.on('tileload',()=>{tileLoaded=true;$('tileStatus').textContent='Satellite chargé ✓'});
@@ -325,7 +324,7 @@ $('export').onclick=()=>{
  if(!tracks.length)return;
  const pending=proposals.filter(p=>!p.reviewed).length;
  if(pending&&!confirm(`${pending} détour(s) n'ont pas encore été examinés. Exporter quand même ?`))return;
- const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.6" xmlns="http://www.topografix.com/GPX/1/1">'+
+ const xml='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="GPX Cleaner 1.0.6.1" xmlns="http://www.topografix.com/GPX/1/1">'+
  tracks.map((t,i)=>{const pts=filtered(i);const segs=[];let group=[];for(const p of pts){if(group.length&&p.seg!==group[0].seg){segs.push(group);group=[]}group.push(p)}if(group.length)segs.push(group);return '<trk><name>'+esc(t.name)+'</name>'+segs.map(seg=>'<trkseg>'+seg.map(exportPoint).join('')+'</trkseg>').join('')+'</trk>'}).join('')+'</gpx>';
  const url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'})),a=document.createElement('a');a.href=url;const typed=$('exportName').value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.+$/,'');a.download=(typed||'GPX_Cleaner_nettoye').replace(/\.gpx$/i,'')+'.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };
