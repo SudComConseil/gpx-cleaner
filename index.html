@@ -32,9 +32,60 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 #stopList{max-height:190px;overflow:auto;font-size:13px}.stopitem{padding:7px 0;border-bottom:1px solid #e5ebed}.stopitem button{padding:5px 9px;font-size:12px}.stop-pin{width:32px;height:40px;position:relative;filter:drop-shadow(0 2px 3px #0005)}.stop-pin svg{display:block}.stop-pin .pin-shape{fill:#e47b26;stroke:white;stroke-width:2.5}.stop-pin.night .pin-shape{fill:#276ba9}.stop-pin .pin-symbol{fill:none;stroke:white;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}.stopitem select{width:auto;max-width:155px;padding:6px;font-size:12px}.stopitem{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.stopitem .stop-meta{flex:1;min-width:140px}
 #mapCount{position:absolute;z-index:510;bottom:12px;left:12px;background:#fffe;padding:5px 9px;border-radius:7px;font-size:11px;color:#405b65;pointer-events:none}#mobileDock,#mobileScrim{display:none}
 @media(max-width:760px){html,body{height:100%;overflow:hidden}header{height:54px;padding:10px 13px}header b{font-size:17px}header>small{display:none}main{display:block;height:calc(100dvh - 54px)}#map{height:100%;min-height:0}aside{position:fixed;z-index:1200;left:0;right:0;bottom:0;max-height:80dvh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 25px #0003;transform:translateY(110%);transition:transform .2s;padding:12px 18px 90px}body.toolsOpen aside{transform:translateY(0)}#mobileScrim{position:fixed;inset:54px 0 0;background:#0006;z-index:1100}body.toolsOpen #mobileScrim{display:block}#mobileDock{display:flex;position:fixed;z-index:1050;bottom:0;left:0;right:0;gap:7px;padding:9px 10px max(9px,env(safe-area-inset-bottom));background:#fff;box-shadow:0 -2px 14px #0002}#mobileDock>*{flex:1;font-size:13px;padding:12px 6px}#maptip{top:9px;right:9px;max-width:195px;padding:6px;font-size:11px}#mapCount{bottom:77px;left:8px}#reviewPanel{top:auto;bottom:75px;padding:10px;width:calc(100% - 16px)}#reviewPanel button{padding:10px 7px;font-size:12px}#candidates{max-height:none}}
+
+/* 1.0.9 — Interface tactile compacte */
+#mobileSheetHead{display:none}
+#maptip{padding:0;max-width:min(280px,calc(100vw - 75px));overflow:visible;border-radius:12px}
+#mapOptions>summary{list-style:none;display:flex;align-items:center;gap:7px;cursor:pointer;padding:10px 12px;font-weight:700;min-width:150px;user-select:none;white-space:nowrap}
+#mapOptions>summary::-webkit-details-marker{display:none}
+#mapOptions .mapChevron{margin-left:auto;font-size:16px;color:#60747c;transition:transform .18s}
+#mapOptions[open] .mapChevron{transform:rotate(180deg)}
+.mapOptionsBody{padding:0 12px 12px;border-top:1px solid #e5ebed}
+.mapOptionLabel{font-size:11px;color:#60747c;font-weight:650;display:block;margin-top:10px}
+#mapOptions #basemap{font-size:13px;padding:9px;margin-top:5px}
+#mapOptions #tileStatus{font-size:11px;line-height:1.35}
+@media(max-width:760px){
+ header{height:52px;padding:8px 14px}header b{font-size:16px}header b small{font-size:11px}
+ main{height:calc(100dvh - 52px)}
+ #maptip{top:10px;right:10px;max-width:min(215px,calc(100vw - 78px));border-radius:12px;box-shadow:0 3px 12px #0002}
+ #mapOptions>summary{font-size:12px;padding:10px 11px;min-width:0}
+ #mapOptions .mapOptionsBody{max-height:50dvh;overflow:auto}
+ #mapOptions #basemap{font-size:12px}
+ aside{left:0;right:0;bottom:0;max-height:88dvh;padding:0 14px calc(18px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;overscroll-behavior:contain;box-shadow:0 -10px 40px #0003}
+ #mobileSheetHead{display:block;position:sticky;top:0;background:white;z-index:3;padding:8px 2px 9px;border-bottom:1px solid #e8eff1}
+ .sheetHandle{display:block;width:40px;height:4px;background:#cbd7da;border-radius:9px;margin:0 auto 10px}
+ .sheetHeadRow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+ .sheetHeadRow strong{font-size:17px}
+ #mobileClose{width:32px;height:32px;border-radius:50%;padding:0;font-size:16px}
+ #mobileSheetHead p{margin:0 0 2px;font-size:11px;color:#6d828a}
+ aside .step{padding:0;border-bottom:1px solid #e6ecef}
+ aside .step>h2{position:relative;margin:0;padding:17px 35px 17px 5px;font-size:14px;font-weight:700;cursor:pointer;min-height:52px;display:flex;align-items:center;touch-action:manipulation}
+ aside .step>h2:after{content:'⌄';position:absolute;right:10px;font-size:20px;color:#5b7c84;transform:rotate(0);transition:transform .18s}
+ aside .step.mobileExpanded>h2:after{transform:rotate(180deg)}
+ aside .step>*:not(h2){display:none!important}
+ aside .step.mobileExpanded>*:not(h2){display:revert!important}
+ aside .step.mobileExpanded{padding-bottom:14px}
+ aside .step.mobileExpanded .row{display:flex!important}
+ aside .step.mobileExpanded .stats{display:flex!important}
+ aside .step.mobileExpanded #candidates,aside .step.mobileExpanded #stopList{display:block!important;max-height:30dvh;overflow:auto}
+ aside .step.mobileExpanded #reviewAll{display:block!important}
+ aside .step.mobileExpanded #reviewAll[style*="display: none"]{display:none!important}
+ aside .step.mobileExpanded label.upload{display:block!important}
+ aside .step.mobileExpanded #showStops{display:inline!important}
+ aside .step.mobileExpanded #exportName{display:block!important}
+ aside .step.mobileExpanded button[style*="display: none"]{display:none!important}
+ #mobileDock{padding:8px 10px max(9px,env(safe-area-inset-bottom));gap:7px}
+ #mobileDock>*{border-radius:11px;min-height:45px;font-size:12px;padding:10px 5px}
+ #mapCount{bottom:75px;font-size:10px}
+ #reviewPanel{bottom:75px;max-height:55dvh;overflow:auto;border-radius:14px}
+ #reviewPanel .reviewText{font-size:12px}
+ #reviewPanel .reviewActions button{font-size:12px}
+ body.toolsOpen #mapOptions{pointer-events:none}
+}
+@media(min-width:761px){#maptip{min-width:170px}}
 </style></head>
-<body><header><b>✂ GPX Cleaner <small>1.0.7</small></b><small>Importer · Nettoyer · Exporter</small></header>
-<div id="mobileScrim"></div><nav id="mobileDock"><label class="upload" for="file">＋ Importer</label><button class="secondary" id="mobileTools">☰ Outils</button><button id="mobileExport">↓ Exporter</button></nav><main><aside>
+<body><header><b>✂ GPX Cleaner <small>1.0.9</small></b><small>Importer · Nettoyer · Exporter</small></header>
+<div id="mobileScrim"></div><nav id="mobileDock"><label class="upload" for="file">＋ Importer</label><button class="secondary" id="mobileTools">☰ Outils</button><button id="mobileExport">↓ Exporter</button></nav><main><aside><div id="mobileSheetHead"><span class="sheetHandle"></span><div class="sheetHeadRow"><strong>Mes outils</strong><button id="mobileClose" type="button" class="secondary" aria-label="Fermer les outils">✕</button></div><p>Choisis une action pour travailler sur ta trace.</p></div>
 <section class="step"><h2>1. Importer une trace</h2>
 <label class="upload">📁 Choisir un GPX ou un export OsmAnd (.OSF)<input id="file" type="file" accept=".gpx,.osf" multiple></label>
 <p id="status" class="muted">Les fichiers sont traités dans ton navigateur. Rien n'est envoyé sur Internet.</p>
@@ -58,7 +109,7 @@ details summary{cursor:pointer;font-weight:650;padding:6px 0}
 <div class="reviewProgress"><div id="reviewBar"></div></div>
 <div class="reviewActions"><button id="reviewPrev" class="secondary">← Précédent</button><button id="reviewKeep" class="secondary">✓ Laisser</button><button id="reviewExclude">✂ Écarter</button></div>
 <div class="row" style="margin-top:8px"><button id="reviewNext" class="secondary">Suivant →</button><button id="reviewFinish" class="secondary">Terminer</button></div>
-</div><div id="mapCount">0 point affiché</div><div id="maptip"><b>Fond de carte</b><select id="basemap"><option value="poi">Plan avec POI (OpenStreetMap)</option><option value="plan">Plan vectoriel (OpenFreeMap)</option><option value="maptiler">Satellite HD (MapTiler)</option><option value="esri">Satellite de secours (Esri)</option></select><label id="labelsRow" style="display:none"><input id="labelsToggle" type="checkbox" checked> Noms et frontières</label><div id="maptilerSettings" style="display:none;margin-top:7px"><label for="maptilerKey" style="display:block;margin-bottom:3px">Clé MapTiler (facultatif)</label><input id="maptilerKey" type="password" autocomplete="off" placeholder="Coller la clé API" style="width:100%;padding:7px;border:1px solid #cbdadd;border-radius:6px;font-size:12px"><button id="saveMaptiler" type="button" style="padding:7px;margin-top:5px;width:100%;font-size:12px">Activer le satellite</button><small style="display:block;margin-top:4px;color:#60747c">Clé publique intégrée. Une autre clé peut être enregistrée sur cet appareil.</small></div><span id="tileStatus">Chargement…</span></div></div></main>
+</div><div id="mapCount">0 point affiché</div><div id="maptip"><details id="mapOptions"><summary id="mapOptionsSummary" aria-label="Choisir le fond de carte">◈ <span id="currentMapName">Plan avec POI</span><span class="mapChevron">⌄</span></summary><div class="mapOptionsBody"><label for="basemap" class="mapOptionLabel">Fond de carte</label><select id="basemap"><option value="poi">Plan avec POI (OpenStreetMap)</option><option value="plan">Plan vectoriel (OpenFreeMap)</option><option value="maptiler">Satellite HD (MapTiler)</option><option value="esri">Satellite de secours (Esri)</option></select><label id="labelsRow" style="display:none"><input id="labelsToggle" type="checkbox" checked> Noms et frontières</label><div id="maptilerSettings" style="display:none;margin-top:7px"><label for="maptilerKey" style="display:block;margin-bottom:3px">Clé MapTiler (facultatif)</label><input id="maptilerKey" type="password" autocomplete="off" placeholder="Coller la clé API" style="width:100%;padding:7px;border:1px solid #cbdadd;border-radius:6px;font-size:12px"><button id="saveMaptiler" type="button" style="padding:7px;margin-top:5px;width:100%;font-size:12px">Activer le satellite</button><small style="display:block;margin-top:4px;color:#60747c">Clé publique intégrée. Une autre clé peut être enregistrée sur cet appareil.</small></div><span id="tileStatus">Chargement…</span></div></details></div></div></main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>if(!window.L)document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');</script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -348,4 +399,34 @@ $('export').onclick=()=>{
  const url=URL.createObjectURL(new Blob([xml],{type:'application/gpx+xml'})),a=document.createElement('a');a.href=url;const typed=$('exportName').value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.+$/,'');a.download=(typed||'GPX_Cleaner_nettoye').replace(/\.gpx$/i,'')+'.gpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };
 draw();restoreSession();
+
+// Navigation mobile : panneau compact, sections repliables et carte dégagée.
+(function(){
+ const sheet=document.querySelector('aside');
+ const steps=Array.from(sheet.querySelectorAll(':scope > .step'));
+ const mobile=()=>window.matchMedia('(max-width:760px)').matches;
+ const close=()=>{document.body.classList.remove('toolsOpen');};
+ const open=()=>{document.body.classList.add('toolsOpen');};
+ steps.forEach((step,index)=>{
+   const title=step.querySelector(':scope > h2');
+   if(!title)return;
+   title.setAttribute('role','button');title.setAttribute('tabindex','0');
+   title.setAttribute('aria-expanded',index===0?'true':'false');
+   if(index===0)step.classList.add('mobileExpanded');
+   function toggle(){if(!mobile())return;const was=step.classList.contains('mobileExpanded');steps.forEach(st=>{st.classList.remove('mobileExpanded');const h=st.querySelector(':scope > h2');if(h)h.setAttribute('aria-expanded','false')});if(!was){step.classList.add('mobileExpanded');title.setAttribute('aria-expanded','true')}sheet.scrollTo({top:0,behavior:'smooth'});}
+   title.addEventListener('click',toggle);
+   title.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
+ });
+ $('mobileClose').addEventListener('click',close);
+ $('mobileTools').onclick=()=>document.body.classList.contains('toolsOpen')?close():open();
+ $('mobileScrim').onclick=close;
+ const names={poi:'Plan avec POI',plan:'Plan vectoriel',maptiler:'Satellite HD',esri:'Satellite secours'};
+ const name=$('currentMapName');
+ const sel=$('basemap');
+ const update=()=>{name.textContent=names[sel.value]||'Fond de carte';};
+ sel.addEventListener('change',()=>{update();if(mobile())$('mapOptions').open=false;});
+ update();
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){close();$('mapOptions').open=false;}});
+ map.on('click',()=>{if(mobile())$('mapOptions').open=false;});
+})();
 </script></body></html>
